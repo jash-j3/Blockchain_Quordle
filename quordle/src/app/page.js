@@ -19,16 +19,34 @@ const Home = () => {
     )
   );
 
+  const isRowComplete = (row) => {
+    return guesses[row].every((cell) => cell !== "");
+  };
+
+  const getLetterColor = (rowIndex, cell, colIndex) => {
+    if (!isRowComplete(rowIndex)) {
+      return "transparent"; // Keep transparent until the row is complete
+    }
+
+    const isCorrectLetter = WORD.includes(cell);
+    const isCorrectPosition = WORD[colIndex] === cell;
+
+    if (isCorrectPosition) {
+      return "#4caf50"; // Green for correct position
+    } else if (isCorrectLetter) {
+      return "#ff9800"; // Orange for correct letter but wrong position
+    }
+    return "transparent"; // Default background
+  };
+
   const handleInputChange = (row, col, value) => {
     // Update the guesses state with the new value, ensuring only the first character is used
     if (/^[a-zA-Z]$/.test(value.key)) {
-      value.target.value = value.key;
+      value.target.value = value.key.toUpperCase();
       const newGuesses = guesses.map((currentRow, rowIndex) =>
         rowIndex === row
           ? currentRow.map((cell, cellIndex) =>
-              cellIndex === col
-                ? value.target.value.slice(0, 1).toUpperCase()
-                : cell
+              cellIndex === col ? value.target.value.slice(0, 1) : cell
             )
           : currentRow
       );
@@ -49,103 +67,68 @@ const Home = () => {
       return;
     } else if (value.key === "Enter") {
       let word = guesses[row].join("");
-      console.log(value.target);
-      // if word is already guessed
-      for (let i = row - 1; i >= 0; i--) {
-        let prevWord = guesses[i].join("");
-        if (word === prevWord) {
-          toast.error("Already Tried!");
-          return;
+      if (isRowComplete(row)) {
+        // Check if word is already guessed
+        for (let i = row - 1; i >= 0; i--) {
+          let prevWord = guesses[i].join("");
+          if (word === prevWord) {
+            toast.error("Already Tried!");
+            return;
+          }
         }
-      }
-
-      // check if word is complete
-      if (word.length === 5) {
+  
+        // Check if word is complete and valid
         if (!dictionary.includes(word.toUpperCase())) {
-          //  if word is not in the dictionary
+          // If word is not in the dictionary
           toast.error("Not in Word List!");
         } else {
-          // when word is valid and new
+          // When word is valid and new
           if (word === WORD) {
             toast.success("You Guessed It!");
+            // Disable further input after guessing correctly
             for (let x = row; x < guessesAllowed; x++) {
               for (let y = 0; y < gridSize; y++) {
-                setTimeout(() => {
-                  inputRefs.current[x][y].current.querySelector(
-                    "input"
-                  ).disabled = true;
-                }, 0);
+                inputRefs.current[x][y].current.querySelector("input").disabled = true;
               }
             }
           } else {
+            // Handle end of game or moving to the next row
             if (row === guessesAllowed - 1) {
               toast.error("Game Over!");
-              setTimeout(
-                () =>
-                  inputRefs.current[row][col].current
-                    .querySelector("input")
-                    .blur(),
-                0
-              );
             } else {
-              setTimeout(
-                () =>
-                  inputRefs.current[row + 1][0].current
-                    .querySelector("input")
-                    .focus(),
-                0
-              );
+              inputRefs.current[row + 1][0].current.querySelector("input").focus();
             }
-            setTimeout(() => {
-              inputRefs.current[row].map(
-                (e) => (e.current.querySelector("input").disabled = true)
-              );
-            }, 0);
           }
+          // Disable the current row
+          inputRefs.current[row].forEach((ref) => ref.current.querySelector("input").disabled = true);
         }
       } else {
         toast.error("Word Not Complete!");
       }
-      return;
     } else if (value.key === "Tab") {
+      // Handle tab navigation
       value.preventDefault();
-      console.log("tab");
       let isFocused = false;
       for (let x = 0; x < guessesAllowed; x++) {
         for (let y = 0; y < gridSize; y++) {
-          if (
-            inputRefs.current[x][y].current.querySelector("input").disabled ===
-            false
-          ) {
+          if (!inputRefs.current[x][y].current.querySelector("input").disabled) {
             inputRefs.current[x][y].current.querySelector("input").focus();
             isFocused = true;
             break;
           }
         }
-        if (isFocused) {
-          break;
-        }
+        if (isFocused) break;
       }
     }
-    // Check to move focus to the next cell
+  
+    // Move focus to the next or previous cell
     if (value.target.value.length === 1 && col < gridSize - 1) {
-      setTimeout(
-        () =>
-          inputRefs.current[row][col + 1].current
-            .querySelector("input")
-            .focus(),
-        0
-      );
+      inputRefs.current[row][col + 1].current.querySelector("input").focus();
     } else if (value.target.value.length === 0 && col > 0) {
-      setTimeout(
-        () =>
-          inputRefs.current[row][col - 1].current
-            .querySelector("input")
-            .focus(),
-        0
-      );
+      inputRefs.current[row][col - 1].current.querySelector("input").focus();
     }
   };
+  
 
   useEffect(() => {
     // Focus the first input on initial render
@@ -183,44 +166,48 @@ const Home = () => {
             marginBottom: "15px",
           }}
         >
-          {guessRow.map((cell, colIndex) => (
-            <TextField
-              key={`${rowIndex}-${colIndex}`}
-              ref={inputRefs.current[rowIndex][colIndex]}
-              value={cell}
-              onKeyDown={(e) => handleInputChange(rowIndex, colIndex, e)}
-              onMouseDown={(e) => e.preventDefault()}
-              inputProps={{
-                maxLength: 1,
-                style: {
-                  color: "white",
-                  fontSize: "1.5rem",
-                  padding: "10px",
-                  textAlign: "center",
-                  caretColor: "transparent",
-                },
-                autoComplete: "off",
-              }}
-              sx={{
-                width: "3rem",
-                height: "3rem",
-                margin: "0 4px",
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "white",
+          {guessRow.map((cell, colIndex) => {
+            const letterColor = getLetterColor(rowIndex, cell, colIndex);
+            return (
+              <TextField
+                key={`${rowIndex}-${colIndex}`}
+                ref={inputRefs.current[rowIndex][colIndex]}
+                value={cell}
+                onKeyDown={(e) => handleInputChange(rowIndex, colIndex, e)}
+                onMouseDown={(e) => e.preventDefault()}
+                inputProps={{
+                  maxLength: 1,
+                  style: {
+                    color: "white",
+                    fontSize: "1.5rem",
+                    padding: "10px",
+                    textAlign: "center",
+                    caretColor: "transparent",
+                    backgroundColor: letterColor,
                   },
-                  "&:hover fieldset": {
-                    borderColor: "white",
+                  autoComplete: "off",
+                }}
+                sx={{
+                  width: "3rem",
+                  height: "3rem",
+                  margin: "0 4px",
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: letterColor !== "transparent" ? letterColor : "white",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "white",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "blue",
+                    },
                   },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "blue",
-                  },
-                },
-              }}
-              variant="outlined"
-              margin="none"
-            />
-          ))}
+                }}
+                variant="outlined"
+                margin="none"
+              />
+            );
+          })}
         </Box>
       ))}
       <Toaster />
