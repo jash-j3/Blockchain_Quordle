@@ -2,8 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Container, Typography, TextField, Box } from "@mui/material";
-
+import toast, { Toaster } from "react-hot-toast";
+import dictionary from "./dictionary";
 const Home = () => {
+  const WORD = "ABCDE"; // Word to be guessed
   const gridSize = 5; // 5 letters in a word
   const guessesAllowed = 6; // 6 attempts
   const [guesses, setGuesses] = useState(
@@ -24,36 +26,104 @@ const Home = () => {
       const newGuesses = guesses.map((currentRow, rowIndex) =>
         rowIndex === row
           ? currentRow.map((cell, cellIndex) =>
-              cellIndex === col ? value.target.value.slice(0, 1).toUpperCase() : cell
+              cellIndex === col
+                ? value.target.value.slice(0, 1).toUpperCase()
+                : cell
             )
           : currentRow
       );
       setGuesses(newGuesses);
-    }
-    else if ((value.key === "Backspace" || value.key === "Delete") && value.target.value.length === 1) {
+    } else if (
+      (value.key === "Backspace" || value.key === "Delete") &&
+      value.target.value.length === 1
+    ) {
       value.target.value = "";
       const newGuesses = guesses.map((currentRow, rowIndex) =>
-      rowIndex === row
-      ? currentRow.map((cell, cellIndex) =>
-      cellIndex === col ? value.target.value : cell
-      )
-      : currentRow
+        rowIndex === row
+          ? currentRow.map((cell, cellIndex) =>
+              cellIndex === col ? value.target.value : cell
+            )
+          : currentRow
       );
       setGuesses(newGuesses);
+      return;
+    } else if (value.key === "Enter") {
+      let word = guesses[row].join("");
+      console.log(word);
+      // if word is already guessed
+      for (let i = row - 1; i >= 0; i--) {
+        let prevWord = guesses[i].join("");
+        if (word === prevWord) {
+          toast.error("Already Tried!");
+          return;
+        }
+      }
+      // check if word is complete
+      if (word.length === 5) {
+        if (!dictionary.includes(word.toUpperCase())) {
+          //  if word is not in the dictionary
+          toast.error("Not in Word List!");
+        } else {
+          // when word is valid and new
+          if (word === WORD) {
+            toast.success("You Guessed It!");
+              setTimeout(
+                () =>
+                  inputRefs.current[row ][col].current
+                    .querySelector("input")
+                    .blur(),
+                0
+              );
+          } else {
+            if (row === guessesAllowed - 1) {
+              toast.error("Game Over!");
+              setTimeout(
+                () =>
+                  inputRefs.current[row ][col].current
+                    .querySelector("input")
+                    .blur(),
+                0
+              );
+            } else {
+              setTimeout(
+                () =>
+                  inputRefs.current[row + 1][0].current
+                    .querySelector("input")
+                    .focus(),
+                0
+              );
+            }
+          }
+        }
+      } else {
+        toast.error("Word Not Complete!");
+      }
       return;
     }
     // Check to move focus to the next cell
     if (value.target.value.length === 1 && col < gridSize - 1) {
-      setTimeout(() => inputRefs.current[row][col + 1].current.querySelector("input").focus(), 0);
+      setTimeout(
+        () =>
+          inputRefs.current[row][col + 1].current
+            .querySelector("input")
+            .focus(),
+        0
+      );
     } else if (value.target.value.length === 0 && col > 0) {
-      setTimeout(() => inputRefs.current[row][col - 1].current.querySelector("input").focus(), 0);
+      setTimeout(
+        () =>
+          inputRefs.current[row][col - 1].current
+            .querySelector("input")
+            .focus(),
+        0
+      );
     }
   };
 
   useEffect(() => {
     // Focus the first input on initial render
     if (inputRefs.current[0][0].current) {
-      inputRefs.current[0][0].current.focus();
+      inputRefs.current[0][0].current.querySelector("input").focus();
     }
   }, []);
 
@@ -91,9 +161,8 @@ const Home = () => {
               key={`${rowIndex}-${colIndex}`}
               ref={inputRefs.current[rowIndex][colIndex]}
               value={cell}
-              onKeyDown={(e) =>
-                handleInputChange(rowIndex, colIndex, e)
-              }
+              onKeyDown={(e) => handleInputChange(rowIndex, colIndex, e)}
+              onMouseDown={(e) => e.preventDefault()}
               inputProps={{
                 maxLength: 1,
                 style: {
@@ -127,6 +196,7 @@ const Home = () => {
           ))}
         </Box>
       ))}
+      <Toaster />
     </Container>
   );
 };
