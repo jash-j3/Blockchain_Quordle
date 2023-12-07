@@ -49,7 +49,7 @@ const Home = () => {
       return;
     } else if (value.key === "Enter") {
       let word = guesses[row].join("");
-      console.log(word);
+      console.log(value.target);
       // if word is already guessed
       for (let i = row - 1; i >= 0; i--) {
         let prevWord = guesses[i].join("");
@@ -58,6 +58,7 @@ const Home = () => {
           return;
         }
       }
+
       // check if word is complete
       if (word.length === 5) {
         if (!dictionary.includes(word.toUpperCase())) {
@@ -67,19 +68,21 @@ const Home = () => {
           // when word is valid and new
           if (word === WORD) {
             toast.success("You Guessed It!");
-              setTimeout(
-                () =>
-                  inputRefs.current[row ][col].current
-                    .querySelector("input")
-                    .blur(),
-                0
-              );
+            for (let x = row; x < guessesAllowed; x++) {
+              for (let y = 0; y < gridSize; y++) {
+                setTimeout(() => {
+                  inputRefs.current[x][y].current.querySelector(
+                    "input"
+                  ).disabled = true;
+                }, 0);
+              }
+            }
           } else {
             if (row === guessesAllowed - 1) {
               toast.error("Game Over!");
               setTimeout(
                 () =>
-                  inputRefs.current[row ][col].current
+                  inputRefs.current[row][col].current
                     .querySelector("input")
                     .blur(),
                 0
@@ -93,12 +96,36 @@ const Home = () => {
                 0
               );
             }
+            setTimeout(() => {
+              inputRefs.current[row].map(
+                (e) => (e.current.querySelector("input").disabled = true)
+              );
+            }, 0);
           }
         }
       } else {
         toast.error("Word Not Complete!");
       }
       return;
+    } else if (value.key === "Tab") {
+      value.preventDefault();
+      console.log("tab");
+      let isFocused = false;
+      for (let x = 0; x < guessesAllowed; x++) {
+        for (let y = 0; y < gridSize; y++) {
+          if (
+            inputRefs.current[x][y].current.querySelector("input").disabled ===
+            false
+          ) {
+            inputRefs.current[x][y].current.querySelector("input").focus();
+            isFocused = true;
+            break;
+          }
+        }
+        if (isFocused) {
+          break;
+        }
+      }
     }
     // Check to move focus to the next cell
     if (value.target.value.length === 1 && col < gridSize - 1) {
