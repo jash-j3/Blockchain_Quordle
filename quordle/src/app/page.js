@@ -26,11 +26,15 @@ const Home = () => {
   const getLetterColor = (rowIndex, cell, colIndex) => {
     // Only color if the word is complete and in the dictionary
     let word = guesses[rowIndex].join("");
-    if (isRowComplete(rowIndex) && dictionary.includes(word.toUpperCase()) && inputRefs.current[rowIndex][gridSize - 1].current.querySelector("input")
-    .disabled) {
+    if (
+      isRowComplete(rowIndex) &&
+      dictionary.includes(word.toUpperCase()) &&
+      inputRefs.current[rowIndex][gridSize - 1].current.querySelector("input")
+        .disabled
+    ) {
       const isCorrectLetter = WORD.includes(cell);
       const isCorrectPosition = WORD[colIndex] === cell;
-  
+
       if (isCorrectPosition) {
         return "#4caf50"; // Green for correct position
       } else if (isCorrectLetter) {
@@ -44,7 +48,7 @@ const Home = () => {
   const [timer, setTimer] = useState(0);
   const timerRequestRef = useRef(null);
   const startTime = useRef(null);
-
+  // console.log("timer", timer);
   const startTimer = () => {
     startTime.current = performance.now();
     const updateTimer = (timestamp) => {
@@ -68,13 +72,15 @@ const Home = () => {
   const formatTime = (milliseconds) => {
     const seconds = Math.floor(milliseconds / 1000);
     const remainingMilliseconds = Math.floor(milliseconds % 1000);
-    return `${seconds}:${remainingMilliseconds < 100 ? '0' : ''}${remainingMilliseconds}`;
+    return `${seconds}:${
+      remainingMilliseconds < 100 ? "0" : ""
+    }${remainingMilliseconds}`;
   };
 
   // console.log("Timer:", timer);
   const handleInputChange = (row, col, value) => {
     if (/^[a-zA-Z]$/.test(value.key)) {
-      if (row === 0 && col === 0 && timer === 0) {
+      if (timer === 0) {
         startTimer();
       }
       value.target.value = value.key.toUpperCase();
@@ -122,12 +128,15 @@ const Home = () => {
             // Trigger a re-render to color the letters
             return newGuesses;
           });
-  
+
           // When word is valid and new
           if (word === WORD) {
             toast.success("You Guessed It!");
             stopTimer();
-            // Disable further input after guessing correctly
+            inputRefs.current[row].forEach(
+              (ref) => (ref.current.querySelector("input").disabled = true)
+            );
+            //Disable further input after guessing correctly
             for (let x = row; x < guessesAllowed; x++) {
               for (let y = 0; y < gridSize; y++) {
                 inputRefs.current[x][y].current.querySelector(
@@ -180,8 +189,6 @@ const Home = () => {
       inputRefs.current[row][col - 1].current.querySelector("input").focus();
     }
   };
-  
-  
 
   useEffect(() => {
     // Focus the first input on initial render
@@ -227,7 +234,16 @@ const Home = () => {
                 ref={inputRefs.current[rowIndex][colIndex]}
                 value={cell}
                 onKeyDown={(e) => handleInputChange(rowIndex, colIndex, e)}
-                onMouseDown={(e) => e.preventDefault()}
+                onMouseDown={(e) => {
+                  if (
+                    rowIndex > 0 &&
+                    !inputRefs.current[rowIndex - 1][0].current.querySelector(
+                      "input"
+                    ).disabled
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
                 inputProps={{
                   maxLength: 1,
                   style: {
