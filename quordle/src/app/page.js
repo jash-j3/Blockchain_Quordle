@@ -45,21 +45,23 @@ const Home = () => {
   };
 
   // Game status
-  const [gameStatus, setGameStatus] = useState("not started"); // ["not started","playing", "won", "lost"]
+  const [gameStatus, setGameStatus] = useState("not started"); // ["not started","playing", "won", "lost"]\
   
   // implementing timer
   const [timer, setTimer] = useState(0);
   const timerRequestRef = useRef(null);
   const startTime = useRef(null);
   const startTimer = () => {
-    startTime.current = performance.now();
     setGameStatus("playing");
     const updateTimer = (timestamp) => {
+      if (startTime.current === null) {
+        startTime.current = timestamp;
+      }
       const elapsed = timestamp - startTime.current;
       setTimer(elapsed);
       timerRequestRef.current = requestAnimationFrame(updateTimer);
     };
-
+  
     timerRequestRef.current = requestAnimationFrame(updateTimer);
   };
 
