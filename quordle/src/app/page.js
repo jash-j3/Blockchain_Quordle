@@ -44,13 +44,16 @@ const Home = () => {
     return "transparent"; // Default background
   };
 
+  // Game status
+  const [gameStatus, setGameStatus] = useState("not started"); // ["not started","playing", "won", "lost"]
+  
   // implementing timer
   const [timer, setTimer] = useState(0);
   const timerRequestRef = useRef(null);
   const startTime = useRef(null);
-  // console.log("timer", timer);
   const startTimer = () => {
     startTime.current = performance.now();
+    setGameStatus("playing");
     const updateTimer = (timestamp) => {
       const elapsed = timestamp - startTime.current;
       setTimer(elapsed);
@@ -77,7 +80,6 @@ const Home = () => {
     }${remainingMilliseconds}`;
   };
 
-  // console.log("Timer:", timer);
   const handleInputChange = (row, col, value) => {
     if (/^[a-zA-Z]$/.test(value.key)) {
       if (timer === 0) {
@@ -133,6 +135,7 @@ const Home = () => {
           if (word === WORD) {
             toast.success("You Guessed It!");
             stopTimer();
+            setGameStatus("won");
             inputRefs.current[row].forEach(
               (ref) => (ref.current.querySelector("input").disabled = true)
             );
@@ -149,6 +152,7 @@ const Home = () => {
             if (row === guessesAllowed - 1) {
               toast.error("Game Over!");
               stopTimer();
+              setGameStatus("lost");
             } else {
               inputRefs.current[row + 1][0].current
                 .querySelector("input")
