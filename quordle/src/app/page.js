@@ -26,7 +26,8 @@ const Home = () => {
   const getLetterColor = (rowIndex, cell, colIndex) => {
     // Only color if the word is complete and in the dictionary
     let word = guesses[rowIndex].join("");
-    if (isRowComplete(rowIndex) && dictionary.includes(word.toUpperCase())) {
+    if (isRowComplete(rowIndex) && dictionary.includes(word.toUpperCase()) && inputRefs.current[rowIndex][gridSize - 1].current.querySelector("input")
+    .disabled) {
       const isCorrectLetter = WORD.includes(cell);
       const isCorrectPosition = WORD[colIndex] === cell;
   
@@ -38,10 +39,44 @@ const Home = () => {
     }
     return "transparent"; // Default background
   };
-  
 
+  // implementing timer
+  const [timer, setTimer] = useState(0);
+  const timerRequestRef = useRef(null);
+  const startTime = useRef(null);
+
+  const startTimer = () => {
+    startTime.current = performance.now();
+    const updateTimer = (timestamp) => {
+      const elapsed = timestamp - startTime.current;
+      setTimer(elapsed);
+      timerRequestRef.current = requestAnimationFrame(updateTimer);
+    };
+
+    timerRequestRef.current = requestAnimationFrame(updateTimer);
+  };
+
+  const stopTimer = () => {
+    cancelAnimationFrame(timerRequestRef.current);
+  };
+
+  const resetTimer = () => {
+    cancelAnimationFrame(timerRequestRef.current);
+    setTimer(0);
+  };
+
+  const formatTime = (milliseconds) => {
+    const seconds = Math.floor(milliseconds / 1000);
+    const remainingMilliseconds = Math.floor(milliseconds % 1000);
+    return `${seconds}:${remainingMilliseconds < 100 ? '0' : ''}${remainingMilliseconds}`;
+  };
+
+  // console.log("Timer:", timer);
   const handleInputChange = (row, col, value) => {
     if (/^[a-zA-Z]$/.test(value.key)) {
+      if (row === 0 && col === 0 && timer === 0) {
+        startTimer();
+      }
       value.target.value = value.key.toUpperCase();
       const newGuesses = guesses.map((currentRow, rowIndex) =>
         rowIndex === row
@@ -76,8 +111,7 @@ const Home = () => {
             return;
           }
         }
-  
-        // Check if word is complete and valid
+
         if (!dictionary.includes(word.toUpperCase())) {
           // If word is not in the dictionary
           toast.error("Not in Word List!");
@@ -92,22 +126,31 @@ const Home = () => {
           // When word is valid and new
           if (word === WORD) {
             toast.success("You Guessed It!");
+            stopTimer();
             // Disable further input after guessing correctly
             for (let x = row; x < guessesAllowed; x++) {
               for (let y = 0; y < gridSize; y++) {
-                inputRefs.current[x][y].current.querySelector("input").disabled = true;
+                inputRefs.current[x][y].current.querySelector(
+                  "input"
+                ).disabled = true;
               }
             }
           } else {
             // Handle end of game or moving to the next row
             if (row === guessesAllowed - 1) {
               toast.error("Game Over!");
+              stopTimer();
             } else {
-              inputRefs.current[row + 1][0].current.querySelector("input").focus();
+              inputRefs.current[row + 1][0].current
+                .querySelector("input")
+                .focus();
             }
           }
           // Disable the current row
-          inputRefs.current[row].forEach((ref) => ref.current.querySelector("input").disabled = true);
+          inputRefs.current[row].forEach(
+            (ref) => (ref.current.querySelector("input").disabled = true)
+          );
+          setGuesses([...guesses]); // Update the state to trigger re-render
         }
       } else {
         toast.error("Word Not Complete!");
@@ -118,7 +161,9 @@ const Home = () => {
       let isFocused = false;
       for (let x = 0; x < guessesAllowed; x++) {
         for (let y = 0; y < gridSize; y++) {
-          if (!inputRefs.current[x][y].current.querySelector("input").disabled) {
+          if (
+            !inputRefs.current[x][y].current.querySelector("input").disabled
+          ) {
             inputRefs.current[x][y].current.querySelector("input").focus();
             isFocused = true;
             break;
@@ -127,7 +172,7 @@ const Home = () => {
         if (isFocused) break;
       }
     }
-  
+
     // Move focus to the next or previous cell
     if (value.target.value.length === 1 && col < gridSize - 1) {
       inputRefs.current[row][col + 1].current.querySelector("input").focus();
@@ -201,7 +246,8 @@ const Home = () => {
                   margin: "0 4px",
                   "& .MuiOutlinedInput-root": {
                     "& fieldset": {
-                      borderColor: letterColor !== "transparent" ? letterColor : "white",
+                      borderColor:
+                        letterColor !== "transparent" ? letterColor : "white",
                     },
                     "&:hover fieldset": {
                       borderColor: "white",
@@ -219,6 +265,7 @@ const Home = () => {
         </Box>
       ))}
       <Toaster />
+      <Typography variant="h4">Timer: {formatTime(timer)} </Typography>
     </Container>
   );
 };
