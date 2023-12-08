@@ -22,6 +22,10 @@ module wordle::wordle {
         b"power", b"waste", 
     ];
 
+    const VALID_WORDS: vector<vector<u8>> = vector[
+        // TODO
+    ]
+
     const GREY: u8 = 0;
     const YELLOW: u8 = 1;
     const GREEN: u8 = 2;
@@ -29,7 +33,8 @@ module wordle::wordle {
 
     struct Game has key {
         guesses: vector<vector<u8>>,
-        word: vector<u8>,
+        word1: vector<u8>,
+        word2: vector<u8>,
         is_ongoing: bool, // false if over
     }
 
@@ -76,9 +81,9 @@ module wordle::wordle {
 
         vector::push_back(&mut game.guesses, guess);
 
-        let res: vector<u8> = wordle_cmp(game.word, guess);
+        let res: vector<u8> = qwordle_cmp(game.word1, game.word2, guess);
 
-        if (guess == game.word) {
+        if (guess == game.word1 || guess == game.word2) {
             finish_game(account, game, true);
             (false, res)
         } else if (vector::length(&game.guesses) == MAX_GUESSES) {
@@ -89,7 +94,7 @@ module wordle::wordle {
         }
     }
 
-    fun wordle_cmp(target: vector<u8>, guess: vector<u8>): vector<u8> {
+    fun qwordle_cmp(target1: vector<u8>, target2: vector<u8>, guess: vector<u8>): vector<u8> {
         let i = 0;
         let result: vector<u8> = vector[];
         while (i < WORD_LENGTH) {
@@ -105,13 +110,16 @@ module wordle::wordle {
 
         i = 0;
         while (i < WORD_LENGTH) {
-            let tc = *vector::borrow(&target, i);
+            let tc1 = *vector::borrow(&target1, i);
+            let tc2 = *vector::borrow(&target2, i);
             let gc = *vector::borrow(&guess, i);
-            if (tc == gc) {
+            if (tc1 == gc || tc2 == gc) {
                 let value = vector::borrow_mut(&mut result, i);
                 *value = GREEN;
             } else {
-                let temp = vector::borrow_mut(&mut misplaced, (tc as u64) - 65);
+                let temp = vector::borrow_mut(&mut misplaced, (tc1 as u64) - 65);
+                *temp = *temp + 1;
+                let temp = vector::borrow_mut(&mut misplaced, (tc2 as u64) - 65);
                 *temp = *temp + 1;
             };
 
@@ -189,18 +197,26 @@ module wordle::wordle {
     }
 
     // not perfect, but I'd say pretty good
-    fun get_random(account: &signer, games_played: u64): u64 {
-        let seed: vector<u8> = b"";
+    fun get_random(account: &signer, games_played: u64): (u64, u64) {
+        let seed1: vector<u8> = b"1";
+        let seed2: vector<u8> = b"2";
 
-        let s = to_bytes(&signer::address_of(account));
-        vector::append(&mut seed, s);
+        let s1 = to_bytes(&signer::address_of(account));
+        vector::append(&mut seed1, s1);
 
-        let s = to_bytes(&games_played);
-        vector::append(&mut seed, s);
+        let s1 = to_bytes(&games_played);
+        vector::append(&mut seed1, s1);
+
+        let s2 = to_bytes(&signer::address_of(account));
+        vector::append(&mut seed2, s2);
+
+        let s2 = to_bytes(&games_played);
+        vector::append(&mut seed2, s2);
 
         let range: u64 = vector::length(&WORDS);
-        std::debug::print(&seed);
-        let a: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed));
-        return a % range
+        std::debug::print(&seed1);
+        let a1: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed1));
+        let a2: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed2));
+        (a1 % range, a2 % range)
     }
 }
