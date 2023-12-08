@@ -24,23 +24,23 @@ const Home = () => {
   };
 
   const getLetterColor = (rowIndex, cell, colIndex) => {
-    if (!isRowComplete(rowIndex)) {
-      return "transparent"; // Keep transparent until the row is complete
-    }
-
-    const isCorrectLetter = WORD.includes(cell);
-    const isCorrectPosition = WORD[colIndex] === cell;
-
-    if (isCorrectPosition) {
-      return "#4caf50"; // Green for correct position
-    } else if (isCorrectLetter) {
-      return "#ff9800"; // Orange for correct letter but wrong position
+    // Only color if the word is complete and in the dictionary
+    let word = guesses[rowIndex].join("");
+    if (isRowComplete(rowIndex) && dictionary.includes(word.toUpperCase())) {
+      const isCorrectLetter = WORD.includes(cell);
+      const isCorrectPosition = WORD[colIndex] === cell;
+  
+      if (isCorrectPosition) {
+        return "#4caf50"; // Green for correct position
+      } else if (isCorrectLetter) {
+        return "#ff9800"; // Orange for correct letter but wrong position
+      }
     }
     return "transparent"; // Default background
   };
+  
 
   const handleInputChange = (row, col, value) => {
-    // Update the guesses state with the new value, ensuring only the first character is used
     if (/^[a-zA-Z]$/.test(value.key)) {
       value.target.value = value.key.toUpperCase();
       const newGuesses = guesses.map((currentRow, rowIndex) =>
@@ -82,6 +82,13 @@ const Home = () => {
           // If word is not in the dictionary
           toast.error("Not in Word List!");
         } else {
+          // Word is valid, color the letters
+          setGuesses((currentGuesses) => {
+            const newGuesses = [...currentGuesses];
+            // Trigger a re-render to color the letters
+            return newGuesses;
+          });
+  
           // When word is valid and new
           if (word === WORD) {
             toast.success("You Guessed It!");
@@ -128,6 +135,7 @@ const Home = () => {
       inputRefs.current[row][col - 1].current.querySelector("input").focus();
     }
   };
+  
   
 
   useEffect(() => {
