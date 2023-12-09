@@ -1,35 +1,9 @@
-module wordle::wordle {
+module wordle::qwordle {
     use std::error;
     use std::signer;
     use std::vector;
     use aptos_std::aptos_hash;
-
-    //// ERROR CONSTANTS
-    const ERR_ALREADY_INIT: u64 = 1;
-    const ERR_INCOMPLETE_GAME: u64 = 2;
-    const ERR_WRONG_LENGTH: u64 = 3;
-    const ERR_NOT_ALPHA: u64 = 4;
-    const ERR_GAME_OVER: u64 = 5;
-    const ERR_NOT_INIT: u64 = 6;
-
-    //// GAME CONSTANTS
-    const WORD_LENGTH: u64 = 5;
-    const MAX_GUESSES: u64 = 6;
-    const WORDS: vector<vector<u8>> = vector[
-        b"aptos", b"block", b"chain", b"smart", b"nodes", b"asset", 
-        b"crypt", b"token", b"trust", b"petra", b"miner", b"proof",
-        b"value", b"valid", b"owner", b"speed", b"trade", b"stake",
-        b"power", b"waste", 
-    ];
-
-    const VALID_WORDS: vector<vector<u8>> = vector[
-        // TODO
-    ]
-
-    const GREY: u8 = 0;
-    const YELLOW: u8 = 1;
-    const GREEN: u8 = 2;
-
+    use wordle::wordle_common as common;
 
     struct Game has key {
         guesses: vector<vector<u8>>,
@@ -46,21 +20,21 @@ module wordle::wordle {
     }
 
     public fun get_stats(account: &signer): (u64, u64, u64, vector<u64>) acquires Account {
-        assert!(exists<Account>(signer::address_of(account)), error::not_found(ERR_NOT_INIT));
+        assert!(exists<Account>(signer::address_of(account)), error::not_found(common::err_not_init()));
         let account = borrow_global<Account>(signer::address_of(account));
 
         (account.games_played, account.games_won, account.streak_length, account.stats_array)
     }
 
     public fun get_game_state(account: &signer): (vector<vector<u8>>, bool) acquires Game {
-        assert!(exists<Game>(signer::address_of(account)), error::not_found(ERR_NOT_INIT)); // change error messages
+        assert!(exists<Game>(signer::address_of(account)), error::not_found(common::err_not_init())); // change error messages
         let game = borrow_global<Game>(signer::address_of(account));
 
         (game.guesses, game.is_ongoing)
     }
     
     public fun init(account: &signer) acquires Account {
-        assert!(!exists<Account>(signer::address_of(account)), error::already_exists(ERR_ALREADY_INIT));
+        assert!(!exists<Account>(signer::address_of(account)), error::already_exists(common::err_already_init()));
 
         let acc = Account {
             games_played: 0,
@@ -77,7 +51,7 @@ module wordle::wordle {
         check_word(&guess);
 
         let game = borrow_global_mut<Game>(signer::address_of(account));
-        assert!(game.is_ongoing, error::invalid_state(ERR_GAME_OVER));
+        assert!(game.is_ongoing, error::invalid_state(common::err_game_over()));
 
         vector::push_back(&mut game.guesses, guess);
 
@@ -86,7 +60,7 @@ module wordle::wordle {
         if (guess == game.word1 || guess == game.word2) {
             finish_game(account, game, true);
             (false, res)
-        } else if (vector::length(&game.guesses) == MAX_GUESSES) {
+        } else if (vector::length(&game.guesses) == common::max_guesses()) {
             finish_game(account, game, false);
             (false, res)
         } else {
@@ -97,8 +71,8 @@ module wordle::wordle {
     fun qwordle_cmp(target1: vector<u8>, target2: vector<u8>, guess: vector<u8>): vector<u8> {
         let i = 0;
         let result: vector<u8> = vector[];
-        while (i < WORD_LENGTH) {
-            vector::push_back(&mut result, GREY);
+        while (i < common::word_length()) {
+            vector::push_back(&mut result, common::grey());
         };
 
         // 26 zeroes, counts unmatched letters in target
@@ -109,13 +83,13 @@ module wordle::wordle {
                    0, 0];
 
         i = 0;
-        while (i < WORD_LENGTH) {
+        while (i < common::word_length()) {
             let tc1 = *vector::borrow(&target1, i);
             let tc2 = *vector::borrow(&target2, i);
             let gc = *vector::borrow(&guess, i);
             if (tc1 == gc || tc2 == gc) {
                 let value = vector::borrow_mut(&mut result, i);
-                *value = GREEN;
+                *value = common::green();
             } else {
                 let temp = vector::borrow_mut(&mut misplaced, (tc1 as u64) - 65);
                 *temp = *temp + 1;
@@ -128,12 +102,12 @@ module wordle::wordle {
 
         i = 0;
 
-        while (i < WORD_LENGTH) {
+        while (i < common::word_length()) {
             let gc = *vector::borrow(&guess, i);
             let value = vector::borrow_mut(&mut result, i);
             let mp = vector::borrow_mut(&mut misplaced, (gc as u64) - 65); 
-            if (*value == GREY && *mp > 0) {
-                *value = YELLOW;
+            if (*value == common::grey ()&& *mp > 0) {
+                *value = common::yellow();
                 *mp = *mp - 1;
             };
 
@@ -163,21 +137,22 @@ module wordle::wordle {
     // word must be WORD_LENGTH bytes long
     // each byte must be ascii A to Z, so in (65..=90)
     fun check_word(word: &vector<u8>) {
-        assert!(vector::length(word) == WORD_LENGTH, error::invalid_argument(ERR_WRONG_LENGTH));
+        assert!(vector::length(word) == common::word_length(), error::invalid_argument(common::err_wrong_length()));
         let i = 0;
-        while (i < WORD_LENGTH) {
+        while (i < common::word_length()) {
             let chr = *vector::borrow(word, i);
-            assert!(chr >= 64 && chr <= 91, error::invalid_argument(ERR_NOT_ALPHA));
+            assert!(chr >= 64 && chr <= 91, error::invalid_argument(common::err_not_alpha()));
         };
     }
 
     fun start_game(account: &signer) acquires Account {
         let acc = borrow_global_mut<Account>(signer::address_of(account));
         acc.games_played = acc.games_played + 1;
-        let idx: u64 = get_random(account, acc.games_played);
+        let (idx1, idx2) = get_random(account, acc.games_played);
         let game = Game {
             guesses: vector[],
-            word: *vector::borrow(&WORDS, idx),
+            word1: *vector::borrow(&common::words(), idx1),
+            word2: *vector::borrow(&common::words(), idx2),
             is_ongoing: true
         };
 
@@ -186,7 +161,7 @@ module wordle::wordle {
 
     public fun reset(account: &signer) acquires Game, Account {
         let game = borrow_global<Game>(signer::address_of(account));
-        assert!(!game.is_ongoing, error::invalid_state(ERR_INCOMPLETE_GAME));
+        assert!(!game.is_ongoing, error::invalid_state(common::err_incomplete_game()));
 
         start_game(account);
     }
@@ -213,10 +188,15 @@ module wordle::wordle {
         let s2 = to_bytes(&games_played);
         vector::append(&mut seed2, s2);
 
-        let range: u64 = vector::length(&WORDS);
+        let range: u64 = vector::length(&common::words());
         std::debug::print(&seed1);
         let a1: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed1));
         let a2: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed2));
         (a1 % range, a2 % range)
+    }
+
+    #[test]
+    fun t() {
+        std::debug::print(&common::words());
     }
 }
