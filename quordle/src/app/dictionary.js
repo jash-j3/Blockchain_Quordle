@@ -6,5 +6,8 @@ const dictionary = [
   "defin",
   "zxcvb",
   "aeiou",
+  "fghij",
+  "klmno",
+  "pqrst",
 ].map((word) => word.toUpperCase());
 export default dictionary;
