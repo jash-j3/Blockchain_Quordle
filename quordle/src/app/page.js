@@ -4,7 +4,119 @@ import React, { useState, useRef, useEffect } from "react";
 import { Container, Typography, TextField, Box } from "@mui/material";
 import toast, { Toaster } from "react-hot-toast";
 import dictionary from "./dictionary";
+import {
+  Types,
+  AptosClient,
+  AptosAccount,
+  HexString,
+  TxnBuilderTypes,
+} from "aptos";
+const client = new AptosClient("https://fullnode.devnet.aptoslabs.com/v1");
+
 const Home = () => {
+  const urlAddress = window.location.pathname.slice(1);
+  const isEditable = !urlAddress;
+  const [address, setAddress] = React.useState(null);
+  React.useEffect(() => {
+    if (urlAddress) {
+      setAddress(urlAddress);
+    } else {
+      window.aptos.account().then((data) => setAddress(data.address));
+    }
+  }, [urlAddress]);
+
+  // init function
+  const init = async () => {
+    // connect
+    const { address, publicKey } = await window.aptos.connect();
+    setAddress(address);
+  };
+
+  React.useEffect(() => {
+    init();
+  }, []);
+  const [account, setAccount] = React.useState(null);
+  React.useEffect(() => {
+    if (!address) return;
+    client.getAccount(address).then(setAccount);
+  }, [address]);
+  const [publishPackageTxnHash, setPublishPackageTxnHash] =
+    React.useState(null);
+  const [isPublishing, setIsPublishing] = React.useState(false);
+  const onPublishModule = async () => {
+    if (!process.env.NEXT_PUBLIC_ADDRESS)
+      return;
+    setIsPublishing(true);
+    const aptosAccount = new AptosAccount(
+      new HexString(
+        process.env.PRIVATE_KEY
+      ).toUint8Array()
+    );
+    try {
+      const txnHash = await client.publishPackage(
+        aptosAccount,
+        new HexString("package-metadata-hex-string").toUint8Array(),
+        [
+          new TxnBuilderTypes.Module(
+            new HexString("module-hex-string").toUint8Array()
+          ),
+        ]
+      );
+      await client.waitForTransaction(txnHash);
+      setPublishPackageTxnHash(txnHash);
+    } catch (error) {
+      console.log("publish error", error);
+      console.log("aptos Account", aptosAccount);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+  const [modules, setModules] = React.useState([]);
+  React.useEffect(() => {
+    if (!address) return;
+    client.getAccountModules(address).then(setModules);
+  }, [address]);
+
+  const hasModule = modules.some((m) => m.abi?.name === "message");
+  const publishInstructions = (
+    <pre>
+      Run this command to publish the module:
+      <br />
+      aptos move publish --package-dir /path/to/hello_blockchain/
+      --named-addresses hello_blockchain={address}
+    </pre>
+  );
+  const ref = React.createRef();
+  const [isSaving, setIsSaving] = React.useState(false);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!ref.current) return;
+
+    const message = ref.current.value;
+    const transaction = {
+      type: "entry_function_payload",
+      function: `${address}::message::set_message`,
+      arguments: [message],
+      type_arguments: [],
+    };
+
+    try {
+      setIsSaving(true);
+      await window.aptos.signAndSubmitTransaction(transaction);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  const [resources, setResources] = React.useState([]);
+  React.useEffect(() => {
+    if (!address) return;
+    client.getAccountResources(address).then(setResources);
+  }, [address]);
+  const resourceType = `${address}::message::MessageHolder`;
+  const resource = resources.find((r) => r.type === resourceType);
+  const data = resource?.data;
+  const message = data?.message;
+
   const WORD = "ABCDE"; // Word to be guessed
   const gridSize = 5; // 5 letters in a word
   const guessesAllowed = 6; // 6 attempts
@@ -46,7 +158,7 @@ const Home = () => {
 
   // Game status
   const [gameStatus, setGameStatus] = useState("not started"); // ["not started","playing", "won", "lost"]\
-  
+
   // implementing timer
   const [timer, setTimer] = useState(0);
   const timerRequestRef = useRef(null);
@@ -61,7 +173,7 @@ const Home = () => {
       setTimer(elapsed);
       timerRequestRef.current = requestAnimationFrame(updateTimer);
     };
-  
+
     timerRequestRef.current = requestAnimationFrame(updateTimer);
   };
 
@@ -288,6 +400,8 @@ const Home = () => {
       ))}
       <Toaster />
       <Typography variant="h4">Timer: {formatTime(timer)} </Typography>
+      <p>Account Address: <code>{address}</code></p>
+      <p>Sequence Number: <code>{account?.sequence_number}</code></p>
     </Container>
   );
 };
