@@ -1,9 +1,7 @@
 module wordle::qwordle {
-    use std::debug;
     use std::error;
     use std::signer;
     use std::vector;
-    use aptos_std::aptos_hash;
     use wordle::wordle_common as common;
 
     struct Game has key, drop {
@@ -19,8 +17,60 @@ module wordle::qwordle {
         streak_length: u64,
         stats_array: vector<u64>, // array of size 6
     }
+
+    const IDX1: vector<u64> = vector[
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        4,
+        5,
+        6,
+        6,
+        7,
+        8,
+        11,
+        11,
+        11,
+        13,
+        13,
+    ];
+
+    const IDX2: vector<u64> = vector[
+        10,
+        3,
+        5,
+        8,
+        9,
+        10,
+        15,
+        16,
+        8,
+        11,
+        15,
+        18,
+        6,
+        11,
+        12,
+        13,
+        13,
+        13,
+        12,
+        13,
+        17,
+        14,
+        18,
+    ];
     
-    public fun init(account: &signer) acquires Account, Game {
+    public fun register(account: &signer) acquires Account, Game {
         assert!(!exists<Account>(signer::address_of(account)), error::already_exists(common::err_already_init()));
 
         let acc = Account {
@@ -139,9 +189,7 @@ module wordle::qwordle {
     fun start_game(account: &signer) acquires Account, Game {
         let acc = borrow_global_mut<Account>(signer::address_of(account));
         acc.games_played = acc.games_played + 1;
-        let (idx1, idx2) = get_random(account, acc.games_played);
-        debug::print(&idx1);
-        debug::print(&idx2);
+        let (idx1, idx2) = gen_idxes(account, acc);
         let game = Game {
             guesses: vector[],
             word1: *vector::borrow(&common::words(), idx1),
@@ -162,32 +210,15 @@ module wordle::qwordle {
         start_game(account);
     }
 
-    fun to_bytes<T>(s: &T): vector<u8> {
-        let str = std::string_utils::to_string(s);
-        *std::string::bytes(&str)
-    }
+    fun gen_idxes(account: &signer, acc: &Account): (u64, u64) {
+        let seed = b"qwordleseed123";
+        std::vector::append(&mut seed, common::to_bytes(&acc.games_played));
+        let range = vector::length(&IDX1);
+        let idx = common::gen_random(account, range, b"qwordleseed123");
 
-    // not perfect, but I'd say pretty good
-    fun get_random(account: &signer, games_played: u64): (u64, u64) {
-        let seed1: vector<u8> = b"1";
-        let seed2: vector<u8> = b"2";
-
-        let s1 = to_bytes(&signer::address_of(account));
-        vector::append(&mut seed1, s1);
-
-        let s1 = to_bytes(&games_played);
-        vector::append(&mut seed1, s1);
-
-        let s2 = to_bytes(&signer::address_of(account));
-        vector::append(&mut seed2, s2);
-
-        let s2 = to_bytes(&games_played);
-        vector::append(&mut seed2, s2);
-
-        let range: u64 = vector::length(&common::words());
-        let a1: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed1));
-        let a2: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed2));
-        (a1 % range, a2 % range)
+        let idx1 = *vector::borrow(&IDX1, idx);
+        let idx2 = *vector::borrow(&IDX2, idx);
+        (idx1, idx2)
     }
 
     #[test(account = @0x123)]

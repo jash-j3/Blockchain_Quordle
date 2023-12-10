@@ -1,9 +1,7 @@
 module wordle::wordle {
-    use std::debug;
     use std::error;
     use std::signer;
     use std::vector;
-    use aptos_std::aptos_hash;
 
     use wordle::wordle_common as common;
 
@@ -20,7 +18,7 @@ module wordle::wordle {
         stats_array: vector<u64>, // array of size 6
     }
     
-    public fun init(account: &signer) acquires Account, Game {
+    public fun register(account: &signer) acquires Account, Game {
         assert!(!exists<Account>(signer::address_of(account)), error::already_exists(common::err_already_init()));
 
         let acc = Account {
@@ -134,11 +132,18 @@ module wordle::wordle {
         assert!(common::is_word_valid(word), error::invalid_argument(common::err_not_word()));
     }
 
+    fun gen_idx(account: &signer, acc: &Account, seed: vector<u8>): u64 {
+        // append games_played to seed so that the index is different for each game
+        std::vector::append(&mut seed, common::to_bytes(&acc.games_played));
+        let range = vector::length(&common::words());
+
+        common::gen_random(account, range, seed)
+    }
+
     fun start_game(account: &signer) acquires Account, Game {
         let acc = borrow_global_mut<Account>(signer::address_of(account));
         acc.games_played = acc.games_played + 1;
-        let idx: u64 = get_random(account, acc.games_played);
-        debug::print(&idx);
+        let idx: u64 = gen_idx(account, acc, b"wordleseed123");
         let game = Game {
             guesses: vector[],
             word: *vector::borrow(&common::words(), idx),
@@ -158,42 +163,22 @@ module wordle::wordle {
         start_game(account);
     }
 
-    fun to_bytes<T>(s: &T): vector<u8> {
-        let str = std::string_utils::to_string(s);
-        *std::string::bytes(&str)
-    }
+    #[test(account = @0x123)]
+    fun test(account: &signer) acquires Account, Game {
+        use std::debug;
 
-    // not perfect, but I'd say pretty good
-    fun get_random(account: &signer, games_played: u64): u64 {
-        let seed: vector<u8> = b"";
+        init(account);
 
-        let s = to_bytes(&signer::address_of(account));
-        vector::append(&mut seed, s);
-
-        let s = to_bytes(&games_played);
-        vector::append(&mut seed, s);
-
-        let range: u64 = vector::length(&common::words());
-        let a: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed));
-        return a % range
-    }
-
-    //#[test(account = @0x123)]
-    //fun test(account: &signer) acquires Account, Game {
-        //use std::debug;
-
-        //init(account);
-
-        //let (b, v) = submit_guess(account, b"APTOS");
-        //(b, v) = submit_guess(account, b"APTOS");
-        //(b, v) = submit_guess(account, b"APTOS");
-        //(b, v) = submit_guess(account, b"APTOS");
-        //(b, v) = submit_guess(account, b"APTOS");
-        //(b, v) = submit_guess(account, b"APTOS");
-        //reset(account);
-        //(b, v) = submit_guess(account, b"APTOS");
+        let (b, v) = submit_guess(account, b"APTOS");
+        (b, v) = submit_guess(account, b"APTOS");
+        (b, v) = submit_guess(account, b"APTOS");
+        (b, v) = submit_guess(account, b"APTOS");
+        (b, v) = submit_guess(account, b"APTOS");
+        (b, v) = submit_guess(account, b"APTOS");
+        reset(account);
+        (b, v) = submit_guess(account, b"APTOS");
         
-         //debug::print(&b);
-         //debug::print(&v);
-    //}
+         debug::print(&b);
+         debug::print(&v);
+    }
 }
