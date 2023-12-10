@@ -18,20 +18,6 @@ module wordle::qwordle {
         streak_length: u64,
         stats_array: vector<u64>, // array of size 6
     }
-
-    public fun get_stats(account: &signer): (u64, u64, u64, vector<u64>) acquires Account {
-        assert!(exists<Account>(signer::address_of(account)), error::not_found(common::err_not_init()));
-        let account = borrow_global<Account>(signer::address_of(account));
-
-        (account.games_played, account.games_won, account.streak_length, account.stats_array)
-    }
-
-    public fun get_game_state(account: &signer): (vector<vector<u8>>, bool) acquires Game {
-        assert!(exists<Game>(signer::address_of(account)), error::not_found(common::err_not_init())); // change error messages
-        let game = borrow_global<Game>(signer::address_of(account));
-
-        (game.guesses, game.is_ongoing)
-    }
     
     public fun init(account: &signer) acquires Account {
         assert!(!exists<Account>(signer::address_of(account)), error::already_exists(common::err_already_init()));

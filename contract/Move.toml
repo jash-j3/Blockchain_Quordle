@@ -7,7 +7,6 @@ authors = []
 "wordle" = "_"
 
 [dev-addresses]
-"wordle" = "0x521f2186f0f38f131da40e07cfeab73d78510a6936d6b8475ce442164021d610"
 
 [dependencies.AptosFramework]
 git = "https://github.com/aptos-labs/aptos-core.git"
