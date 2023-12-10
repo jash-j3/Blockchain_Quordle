@@ -59,10 +59,7 @@ module wordle::wordle_common {
         MAX_GUESSES
     }
     public fun words(): vector<vector<u8>> {
-        wordle::valid_words::words()
-    }
-    public fun is_word_valid(word: &vector<u8>): bool {
-        wordle::valid_words::is_word_valid(word)
+        WORDS
     }
 
     public fun to_bytes<T>(s: &T): vector<u8> {
@@ -78,18 +75,15 @@ module wordle::wordle_common {
         let a: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed));
         a % range
     }
-}
-
-module wordle::valid_words {
-    public fun words(): vector<vector<u8>> {
-        WORDS
-    }
 
     public fun is_word_valid(word: &vector<u8>): bool {
+        // check if word is in the list of answers
         if (std::vector::contains(&WORDS, word)) {
             return true
         };
 
+        // otherwise check if present in wordlist
+        // wordlist is encoded to save space (see encode.py)
         let encoded = encode(word);
         std::vector::contains(&VALID_WORDS, &encoded)
     }
