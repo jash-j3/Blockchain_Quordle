@@ -5,7 +5,9 @@ import { Container, Typography, TextField, Box } from "@mui/material";
 import toast, { Toaster } from "react-hot-toast";
 import dictionary from "./dictionary";
 const Home = () => {
-  const WORD = "ABCDE"; // Word to be guessed
+  // Words to be guessed
+  const WORD_1 = "ABCDE";
+  const WORD_2 = "FGHIJ";
   const gridSize = 5; // 5 letters in a word
   const guessesAllowed = 6; // 6 attempts
   const [guesses, setGuesses] = useState(
@@ -32,12 +34,26 @@ const Home = () => {
       inputRefs.current[rowIndex][gridSize - 1].current.querySelector("input")
         .disabled
     ) {
-      const isCorrectLetter = WORD.includes(cell);
-      const isCorrectPosition = WORD[colIndex] === cell;
+      const isCorrectLetter_1 = WORD_1.includes(cell);
+      const isCorrectPosition_1 = WORD_1[colIndex] === cell;
+      const isCorrectLetter_2 = WORD_2.includes(cell);
+      const isCorrectPosition_2 = WORD_2[colIndex] === cell;
 
-      if (isCorrectPosition) {
+      if (isCorrectPosition_1) {
+        if (guesses[rowIndex].some((element) => WORD_2.includes(element)))
+          return "linear-gradient(to right, transparent 50%, #4caf50 50%)";
         return "#4caf50"; // Green for correct position
-      } else if (isCorrectLetter) {
+      } else if (isCorrectLetter_1) {
+        if (guesses[rowIndex].some((element) => WORD_2.includes(element)))
+          return "linear-gradient(to right, transparent 50%, #ff9800 50%)";
+        return "#ff9800"; // Orange for correct letter but wrong position
+      } else if (isCorrectPosition_2) {
+        if (guesses[rowIndex].some((element) => WORD_1.includes(element)))
+          return "linear-gradient(to right, transparent 50%, #4caf50 50%)";
+        return "#4caf50"; // Green for correct position
+      } else if (isCorrectLetter_2) {
+        if (guesses[rowIndex].some((element) => WORD_1.includes(element)))
+          return "linear-gradient(to right, transparent 50%, #ff9800 50%)";
         return "#ff9800"; // Orange for correct letter but wrong position
       }
     }
@@ -46,7 +62,7 @@ const Home = () => {
 
   // Game status
   const [gameStatus, setGameStatus] = useState("not started"); // ["not started","playing", "won", "lost"]\
-  
+
   // implementing timer
   const [timer, setTimer] = useState(0);
   const timerRequestRef = useRef(null);
@@ -61,7 +77,7 @@ const Home = () => {
       setTimer(elapsed);
       timerRequestRef.current = requestAnimationFrame(updateTimer);
     };
-  
+
     timerRequestRef.current = requestAnimationFrame(updateTimer);
   };
 
@@ -134,7 +150,7 @@ const Home = () => {
           });
 
           // When word is valid and new
-          if (word === WORD) {
+          if (word === WORD_1 || word === WORD_2) {
             toast.success("You Guessed It!");
             stopTimer();
             setGameStatus("won");
@@ -221,7 +237,7 @@ const Home = () => {
         color="white"
         sx={{ textAlign: "center", fontWeight: "bold", marginBottom: 4 }}
       >
-        Wordle
+        Qwordle
       </Typography>
       {guesses.map((guessRow, rowIndex) => (
         <Box
