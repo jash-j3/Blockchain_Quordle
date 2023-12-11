@@ -52,28 +52,40 @@ const App = () => {
         type_arguments: [],
         arguments: [account.address],
       };
-      const balance = await client.view(payload);
-      console.log("view here ", balance);
-      if (!balance) {
-        const transaction = {
-          arguments: [],
-          function:
-            "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::register",
-          type_arguments: [],
-        };
-        try {
-          const pendingTransaction =
-            await window.aptos.signAndSubmitTransaction(transaction);
-          const client = new AptosClient("https://testnet.aptoslabs.com");
-          const txn = await client.waitForTransactionWithResult(
-            pendingTransaction.hash
-          );
-          setTransactionResult(txn);
-        } catch (err) {
-          console.log(err);
-          setError(err);
-        }
+      try {
+        const view = await client.view(payload);
+        console.log("view here ", view);
+      } catch (error) {
+        console.log("register error", error);
+          const transaction = {
+            arguments: [],
+            function:
+              "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::register",
+            type_arguments: [],
+          };
+          try {
+            const pendingTransaction =
+              await window.aptos.signAndSubmitTransaction(transaction);
+            const client = new AptosClient("https://testnet.aptoslabs.com");
+            const txn = await client.waitForTransactionWithResult(
+              pendingTransaction.hash
+            );
+            setTransactionResult(txn);
+          } catch (err) {
+            console.log(err);
+            setError(err);
+          }
+
       }
+
+      const gameStatus = {
+        function:
+          "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::get_game_state",
+        type_arguments: [],
+        arguments: [account.address],
+      };
+      const gs = await client.view(gameStatus);
+      console.log("view here ", gs);
     };
 
     executeTransaction();
