@@ -162,11 +162,13 @@ const App = () => {
 
       // Ensure each inner array has exactly 5 elements
       result = result.map((subArray) => {
-        return Array.from({ length: 5 }, (v, i) => subArray[i] || "");
+        return Array.from(
+          { length: 5 },
+          (v, i) => subArray[i] || ""
+        );
       });
       console.log("finally resuly", result);
       setGuesses(result);
-      
       // if (result.length == guesses.length) {
       // }
       console.log("guess", guesses);
@@ -195,16 +197,16 @@ const App = () => {
           );
           setTransactionResult(txn);
         } catch (err) {
-          console.log("reset", err);
+          console.log("reset",err);
           setError(err);
         }
       }
     } catch (error) {
       console.log(error);
-    } finally {
-      setGuesses(
-        Array.from({ length: guessesAllowed }, () => Array(gridSize).fill(""))
-      );
+    }
+    finally{
+    
+    setGuesses(Array.from({ length: guessesAllowed }, () => Array(gridSize).fill("")));
       window.location.reload();
     }
   };
@@ -405,33 +407,33 @@ const App = () => {
         });
 
         // When word is valid and new
-        if (word === WORD) {
-          toast.success("You Guessed It!");
-          stopTimer();
-          setGameStatus("won");
-          inputRefs.current[row].forEach(
-            (ref) => (ref.current.querySelector("input").disabled = true)
-          );
-          //Disable further input after guessing correctly
-          for (let x = row; x < guessesAllowed; x++) {
-            for (let y = 0; y < gridSize; y++) {
-              inputRefs.current[x][y].current.querySelector(
-                "input"
-              ).disabled = true;
-            }
-          }
-        } else {
-          // Handle end of game or moving to the next row
-          if (row === guessesAllowed - 1) {
-            toast.error("Game Over!");
-            stopTimer();
-            setGameStatus("lost");
-          } else {
-            inputRefs.current[row + 1][0].current
-              .querySelector("input")
-              .focus();
-          }
-        }
+        // if (word === WORD) {
+        //   toast.success("You Guessed It!");
+        //   stopTimer();
+        //   setGameStatus("won");
+        //   inputRefs.current[row].forEach(
+        //     (ref) => (ref.current.querySelector("input").disabled = true)
+        //   );
+        //   //Disable further input after guessing correctly
+        //   for (let x = row; x < guessesAllowed; x++) {
+        //     for (let y = 0; y < gridSize; y++) {
+        //       inputRefs.current[x][y].current.querySelector(
+        //         "input"
+        //       ).disabled = true;
+        //     }
+        //   }
+        // } else {
+        //   // Handle end of game or moving to the next row
+        //   if (row === guessesAllowed - 1) {
+        //     toast.error("Game Over!");
+        //     stopTimer();
+        //     setGameStatus("lost");
+        //   } else {
+        //     inputRefs.current[row + 1][0].current
+        //       .querySelector("input")
+        //       .focus();
+        //   }
+        // }
         // Disable the current row
         inputRefs.current[row].forEach(
           (ref) => (ref.current.querySelector("input").disabled = true)
