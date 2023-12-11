@@ -162,13 +162,11 @@ const App = () => {
 
       // Ensure each inner array has exactly 5 elements
       result = result.map((subArray) => {
-        return Array.from(
-          { length: 5 },
-          (v, i) => subArray[i] || ""
-        );
+        return Array.from({ length: 5 }, (v, i) => subArray[i] || "");
       });
       console.log("finally resuly", result);
       setGuesses(result);
+      
       // if (result.length == guesses.length) {
       // }
       console.log("guess", guesses);
@@ -197,14 +195,16 @@ const App = () => {
           );
           setTransactionResult(txn);
         } catch (err) {
-          console.log(err);
+          console.log("reset", err);
           setError(err);
         }
       }
     } catch (error) {
       console.log(error);
-    }
-    finally{
+    } finally {
+      setGuesses(
+        Array.from({ length: guessesAllowed }, () => Array(gridSize).fill(""))
+      );
       window.location.reload();
     }
   };
