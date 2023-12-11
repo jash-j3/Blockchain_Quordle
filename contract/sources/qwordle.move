@@ -154,8 +154,9 @@ module wordle::qwordle {
     }
 
     entry fun reset(account: &signer) acquires Game, Account {
-        let game = borrow_global<Game>(signer::address_of(account));
+        let game = borrow_global_mut<Game>(signer::address_of(account));
         if (game.is_ongoing) {
+            finish_game(account, game, false);
             return
         };
 
