@@ -24,7 +24,7 @@ const petra =  () => {
   }}
   const transaction = {
     arguments: [],
-    function: '"0x3c92e26dc800a3c7d59bca54097d289708a636dea9d7eee8dc8624f133c84817::wordle::register',
+    function: '0x3c92e26dc800a3c7d59bca54097d289708a636dea9d7eee8dc8624f133c84817::wordle::register',
     type_arguments: [],
   };
    
