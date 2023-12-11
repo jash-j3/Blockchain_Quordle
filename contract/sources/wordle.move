@@ -160,7 +160,9 @@ module wordle::wordle {
 
     entry fun reset(account: &signer) acquires Game, Account {
         let game = borrow_global<Game>(signer::address_of(account));
-        assert!(!game.is_ongoing, error::invalid_state(common::err_incomplete_game()));
+        if (game.is_ongoing) {
+            return
+        };
 
         start_game(account);
     }
