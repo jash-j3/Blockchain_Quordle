@@ -1,8 +1,0 @@
----
-profiles:
-  quordle:
-    private_key: "0x2d428c0d071ef636ee1717530ff10c241161ea80521bdba17090ddb520dcffa5"
-    public_key: "0x000fe0135c2635619f4f6075fc63e6e5505436684fec5d78f263fac629566b56"
-    account: 961a4e7d9ece3b4b718647dbdfe8973e0b4458b42850dd3d49c8c670df4664e3
-    rest_url: "https://fullnode.devnet.aptoslabs.com"
-    faucet_url: "https://faucet.devnet.aptoslabs.com"
