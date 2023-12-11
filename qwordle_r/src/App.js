@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Home from "./page1";
+import './App.css'
 import {
   Types,
   AptosClient,

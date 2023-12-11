@@ -417,7 +417,7 @@ const Home = () => {
         </Box>
       ))}
       <Toaster />
-      <Typography variant="h4">Timer: {formatTime(timer)} </Typography>
+      <Typography variant="h4" sx={{color:"white"}}>Timer: {formatTime(timer)} </Typography>
       <p>
         Account Address: <code>{address}</code>
       </p>
