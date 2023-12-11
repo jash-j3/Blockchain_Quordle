@@ -690,7 +690,6 @@ const App = () => {
           </Button>
         </ThemeProvider>
       </Container>
-      <QApp />
     </div>
   );
 };
