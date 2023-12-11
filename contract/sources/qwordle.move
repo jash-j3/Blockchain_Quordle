@@ -19,57 +19,21 @@ module wordle::qwordle {
         stats_array: vector<u64>, // array of size 6
     }
 
-    const IDX1: vector<u64> = vector[
-        0,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        4,
-        5,
-        6,
-        6,
-        7,
-        8,
-        11,
-        11,
-        11,
-        13,
-        13,
-    ];
+    #[view]
+    public fun get_stats(addr: address): (u64, u64, u64, vector<u64>) acquires Account {
+        assert!(exists<Account>(addr), error::not_found(common::err_not_init()));
+        let account = borrow_global<Account>(addr);
 
-    const IDX2: vector<u64> = vector[
-        10,
-        3,
-        5,
-        8,
-        9,
-        10,
-        15,
-        16,
-        8,
-        11,
-        15,
-        18,
-        6,
-        11,
-        12,
-        13,
-        13,
-        13,
-        12,
-        13,
-        17,
-        14,
-        18,
-    ];
+        (account.games_played, account.games_won, account.streak_length, account.stats_array)
+    }
+
+    #[view]
+    public fun get_game_state(addr: address): (vector<vector<u8>>, vector<vector<u8>>, bool) acquires Game {
+        assert!(exists<Game>(addr), error::not_found(common::err_not_init())); // change error messages
+        let game = borrow_global<Game>(addr);
+
+        (game.guesses, game.guess_results, game.is_ongoing)
+    }
     
     entry fun register(account: &signer) acquires Account, Game {
         assert!(!exists<Account>(signer::address_of(account)), error::already_exists(common::err_already_init()));
@@ -237,4 +201,59 @@ module wordle::qwordle {
          debug::print(&b);
          debug::print(&v);
     }
+
+    // possible non conflicting answer pairs are hardcoded into the contract here
+    // repeated random generation of pairs is too expensive
+
+    const IDX1: vector<u64> = vector[
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        4,
+        5,
+        6,
+        6,
+        7,
+        8,
+        11,
+        11,
+        11,
+        13,
+        13,
+    ];
+
+    const IDX2: vector<u64> = vector[
+        10,
+        3,
+        5,
+        8,
+        9,
+        10,
+        15,
+        16,
+        8,
+        11,
+        15,
+        18,
+        6,
+        11,
+        12,
+        13,
+        13,
+        13,
+        12,
+        13,
+        17,
+        14,
+        18,
+    ];
 }

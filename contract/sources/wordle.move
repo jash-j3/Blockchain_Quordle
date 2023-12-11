@@ -18,6 +18,22 @@ module wordle::wordle {
         streak_length: u64,
         stats_array: vector<u64>, // array of size 6
     }
+
+    #[view]
+    public fun get_stats(addr: address): (u64, u64, u64, vector<u64>) acquires Account {
+        assert!(exists<Account>(addr), error::not_found(common::err_not_init()));
+        let account = borrow_global<Account>(addr);
+
+        (account.games_played, account.games_won, account.streak_length, account.stats_array)
+    }
+
+    #[view]
+    public fun get_game_state(addr: address): (vector<vector<u8>>, vector<vector<u8>>, bool) acquires Game {
+        assert!(exists<Game>(addr), error::not_found(common::err_not_init())); // change error messages
+        let game = borrow_global<Game>(addr);
+
+        (game.guesses, game.guess_results, game.is_ongoing)
+    }
     
     entry fun register(account: &signer) acquires Account, Game {
         assert!(!exists<Account>(signer::address_of(account)), error::already_exists(common::err_already_init()));
