@@ -1,5 +1,9 @@
+"use client"
+import { useEffect } from "react";
 import Home from "./page1";
-const petra = async () => {
+const petra =  () => {
+  useEffect(() => {
+    return async() => {
   if(typeof window !== "undefined"){const isPetraInstalled = window.aptos;
   const getAptosWallet = () => {
     if ("aptos" in window) {
@@ -35,6 +39,8 @@ const petra = async () => {
   }
 
   return <Home />
+}
+});
 };
 
 export default petra;
