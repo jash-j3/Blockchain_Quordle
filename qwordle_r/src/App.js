@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Home from "./page1";
+import QApp from "./App_qwordle";
 import { Container, Typography, TextField, Box } from "@mui/material";
 import toast, { Toaster } from "react-hot-toast";
 import dictionary from "./dictionary";
@@ -689,6 +690,7 @@ const App = () => {
           </Button>
         </ThemeProvider>
       </Container>
+      <QApp />
     </div>
   );
 };

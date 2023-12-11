@@ -41,7 +41,7 @@ const theme = createTheme({
 });
 const client = new AptosClient("https://fullnode.devnet.aptoslabs.com/v1");
 
-const App = () => {
+const QApp = () => {
   const [account, setAccount] = useState(null);
   const [transactionResult, setTransactionResult] = useState(null);
   const [error, setError] = useState(null);
@@ -691,4 +691,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default QApp;
