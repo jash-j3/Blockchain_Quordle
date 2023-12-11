@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import Home from "./page1";
 import {
   Types,
@@ -7,6 +7,7 @@ import {
   HexString,
   TxnBuilderTypes,
 } from "aptos";
+const client = new AptosClient("https://fullnode.devnet.aptoslabs.com/v1");
 
 const App = () => {
   const [account, setAccount] = useState(null);
@@ -43,35 +44,50 @@ const App = () => {
     const executeTransaction = async () => {
       if (!account) return;
 
-      const transaction = {
-        arguments: [],
-        function: '0x3c92e26dc800a3c7d59bca54097d289708a636dea9d7eee8dc8624f133c84817::wordle::register',
+      // const transaction = {
+      //   arguments: [],
+      //   function:
+      //     "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::register",
+      //   type_arguments: [],
+      // };
+      console.log("account:", account);
+      const payload = {
+        function: "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::get_stats",
         type_arguments: [],
+        arguments: [account.address],
       };
-
-      try {
-        const pendingTransaction = await window.aptos.signAndSubmitTransaction(transaction);
-        const client = new AptosClient('https://testnet.aptoslabs.com');
-        const txn = await client.waitForTransactionWithResult(pendingTransaction.hash);
-        setTransactionResult(txn);
-      } catch (err) {
-        console.log(err);
-        setError(err);
-      }
+      const balance = await client.view(payload);
+      console.log("view here ", balance);
+      // try {
+      //   const pendingTransaction = await window.aptos.signAndSubmitTransaction(
+      //     transaction
+      //   );
+      //   const client = new AptosClient("https://testnet.aptoslabs.com");
+      //   const txn = await client.waitForTransactionWithResult(
+      //     pendingTransaction.hash
+      //   );
+      //   setTransactionResult(txn);
+      // } catch (err) {
+      //   console.log(err);
+      //   setError(err);
+      // }
     };
 
     executeTransaction();
-  }, [account]);  // Re-run the effect if account changes
+  }, [account]); // Re-run the effect if account changes
 
   if (error) {
     console.log("error hereee", error);
-    return <div>Error: {error.message}</div>;}
+    return <div>Error: {error.message}</div>;
+  }
   if (!account) return <div>Loading...</div>;
 
   return (
     <div>
       <Home />
-      {transactionResult && <div>Transaction successful: {JSON.stringify(transactionResult)}</div>}
+      {transactionResult && (
+        <div>Transaction successful: {JSON.stringify(transactionResult)}</div>
+      )}
     </div>
   );
 };
