@@ -23,13 +23,30 @@ import {
   HexString,
   TxnBuilderTypes,
 } from "aptos";
+import Web3 from "web3";
 const client = new AptosClient("https://fullnode.devnet.aptoslabs.com/v1");
 
 const App = () => {
+  const web3 = new Web3();
   const [account, setAccount] = useState(null);
   const [transactionResult, setTransactionResult] = useState(null);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(["NA", "NA", "NA", Array(6).fill(0)]);
+  const [GS, setGS] = useState([[], [], 0]);
+  const WORD = "ABCDE"; // Word to be guessed
+  const gridSize = 5; // 5 letters in a word
+  const guessesAllowed = 6; // 6 attempts
+  const [guesses, setGuesses] = useState(
+    Array.from({ length: guessesAllowed }, () => Array(gridSize).fill(""))
+  );
+  const inputRefs = useRef(
+    guesses.map(() =>
+      Array(gridSize)
+        .fill(0)
+        .map(() => React.createRef())
+    )
+  );
+
   useEffect(() => {
     const getAptosWallet = () => {
       if ("aptos" in window) {
@@ -63,7 +80,7 @@ const App = () => {
       console.log("account:", account);
       const payload = {
         function:
-          "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::get_stats",
+          "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::get_stats",
         type_arguments: [],
         arguments: [account.address],
       };
@@ -76,13 +93,13 @@ const App = () => {
         const transaction = {
           arguments: [],
           function:
-            "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::register",
+            "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::register",
           type_arguments: [],
         };
         try {
           const pendingTransaction =
             await window.aptos.signAndSubmitTransaction(transaction);
-          const client = new AptosClient("https://testnet.aptoslabs.com");
+          const client = new AptosClient("https://devnet.aptoslabs.com");
           const txn = await client.waitForTransactionWithResult(
             pendingTransaction.hash
           );
@@ -95,32 +112,52 @@ const App = () => {
 
       const gameStatus = {
         function:
-          "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::get_game_state",
+          "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::get_game_state",
         type_arguments: [],
         arguments: [account.address],
       };
       const gs = await client.view(gameStatus);
       console.log("gs here ", gs);
+      // const convertHexToChars = (hexStr) => {
+      //   // Remove the '0x' prefix and split the string into pairs of two characters
+      //   const pairs = hexStr.substring(2).match(/.{1,2}/g);
+
+      //   // Convert each pair from hex to ASCII character
+      //   return pairs.map((pair) => String.fromCharCode(parseInt(pair, 16)));
+      // };
+
+      // const result = gs.map(convertHexToChars);
+      // console.log("result",result);
+
+      const convertHexToChars = (hexStr) => {
+        // Ensure hexStr is a string
+        if (typeof hexStr !== "string") {
+          console.error("Non-string value encountered:", hexStr);
+          return [];
+        }
+
+        // Remove the '0x' prefix and split the string into pairs of two characters
+        const pairs = hexStr.substring(2).match(/.{1,2}/g);
+
+        // Convert each pair from hex to ASCII character
+        return pairs.map((pair) => String.fromCharCode(parseInt(pair, 16)));
+      };
+
+      const result = gs[0].map(convertHexToChars);
+
+      console.log("result", result);
+      console.log("guess", guesses);
+      setGuesses(result);
+      console.log("guess", guesses);
+
+      setGS(gs);
+      console.log("GS here ", GS);
     };
 
     executeTransaction();
   }, [account]); // Re-run the effect if account changes
 
   //GAME HERE{}
-
-  const WORD = "ABCDE"; // Word to be guessed
-  const gridSize = 5; // 5 letters in a word
-  const guessesAllowed = 6; // 6 attempts
-  const [guesses, setGuesses] = useState(
-    Array.from({ length: guessesAllowed }, () => Array(gridSize).fill(""))
-  );
-  const inputRefs = useRef(
-    guesses.map(() =>
-      Array(gridSize)
-        .fill(0)
-        .map(() => React.createRef())
-    )
-  );
 
   const isRowComplete = (row) => {
     return guesses[row].every((cell) => cell !== "");
@@ -129,21 +166,32 @@ const App = () => {
   const getLetterColor = (rowIndex, cell, colIndex) => {
     // Only color if the word is complete and in the dictionary
     let word = guesses[rowIndex].join("");
-    if (
-      isRowComplete(rowIndex) &&
-      dictionary.includes(word.toUpperCase()) &&
-      inputRefs.current[rowIndex][gridSize - 1].current.querySelector("input")
-        .disabled
-    ) {
-      const isCorrectLetter = WORD.includes(cell);
-      const isCorrectPosition = WORD[colIndex] === cell;
+    console.log("res22");
 
-      if (isCorrectPosition) {
+    const isCorrectLetter = WORD.includes(cell);
+    const isCorrectPosition = WORD[colIndex] === cell;
+
+    const convertToAlternateNumbers = (hexStr) => {
+      // Remove the '0x' prefix and get every alternate digit starting from index 1
+      const alternateNumbers = hexStr
+        .substring(2)
+        .split("")
+        .filter((_, index) => index % 2 !== 0);
+
+      // Convert the characters to numbers
+      return alternateNumbers.map((char) => parseInt(char, 10));
+    };
+    const result = GS[1].map(convertToAlternateNumbers);
+    console.log("12319909723", result);
+    console.log("123123", result[colIndex]);
+    try {
+      if (result[rowIndex][colIndex] == 2) {
         return "#4caf50"; // Green for correct position
-      } else if (isCorrectLetter) {
+      } else if (result[rowIndex][colIndex] == 1) {
         return "#ff9800"; // Orange for correct letter but wrong position
       }
-    }
+    } catch (error) {}
+
     return "transparent"; // Default background
   };
 
@@ -217,26 +265,91 @@ const App = () => {
       let word = guesses[row].join("");
       if (isRowComplete(row)) {
         // Check if word is already guessed
-        for (let i = row - 1; i >= 0; i--) {
-          let prevWord = guesses[i].join("");
-          if (word === prevWord) {
-            toast.error("Already Tried!");
-            return;
-          }
-        }
+        // for (let i = row - 1; i >= 0; i--) {
+        //   let prevWord = guesses[i].join("");
+        //   if (word === prevWord) {
+        //     toast.error("Already Tried!");
+        //     return;
+        //   }
+        // }
+
         const executeTransaction = async () => {
-          console.log("account:", account);
-          const payload = {
-            function:
-              "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::submit_guess",
-            type_arguments: [],
-            arguments: [
-              account.address,
-              guesses[row].map((x) => word.charCodeAt(x)),
-            ],
-          };
-          const submit_guess = await client.submit_guess(payload);
+          console.log("hello:", account);
+          try {
+            console.log(
+              "encoding",
+              guesses[row].map((char) => char.charCodeAt(0))
+            );
+            const submitGuess = {
+              function:
+                "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::submit_guess",
+              type_arguments: [],
+              arguments: [guesses[row].map((char) => char.charCodeAt(0))],
+            };
+            console.log("here1");
+
+            const pendingTransaction =
+              await window.aptos.signAndSubmitTransaction(submitGuess);
+
+            console.log("here2");
+            const client = new AptosClient("https://devnet.aptoslabs.com");
+            const txn = await client.waitForTransactionWithResult(
+              pendingTransaction.hash
+            );
+            console.log("txn here", txn);
+            setTransactionResult(txn);
+            console.log("account:", account);
+            const payload = {
+              function:
+                "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::get_game_state",
+              type_arguments: [],
+              arguments: [account.address],
+            };
+            try {
+              const view = await client.view(payload);
+              console.log("gs22 here ", view);
+              if (view[0].length != GS) {
+                console.log("gs2vew", view[0].length);
+                setGS(view[0].length);
+                console.log("Upt", GS);
+                setGS(view[0].length);
+                console.log("Upt2", GS);
+              }
+            } catch (error) {
+              console.log(error);
+            }
+            // await client.waitForTransaction(txnHash, { checkSuccess: true });
+            console.log("insige sg");
+          } catch (err) {
+            console.log(err);
+            console.log("in the catchhhh");
+          } finally {
+            console.log("finalyyyyy");
+          }
+          // const submitGuess = {
+          //   function:
+          //     "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::submit_guess",
+          //   type_arguments: [],
+          //   arguments: [guesses[row].map((x) => word.charCodeAt(x))],
+          // };
+          // try {
+          //   const submit_guess = await client.view(submitGuess);
+          //   console.log(submit_guess);
+          // } catch (error) {
+          //   console.log("sg error", error);
+          //   const lastDigit = error % 10;
+          //   switch (lastDigit) {
+          //     case 1:
+          //       break;
+
+          //     default:
+          //       break;
+          //   }
+          // }
         };
+
+        executeTransaction();
+
         // Word is valid, color the letters
         setGuesses((currentGuesses) => {
           const newGuesses = [...currentGuesses];
@@ -321,6 +434,7 @@ const App = () => {
   if (!account) {
     return <div>Loading...</div>;
   }
+  if (!account) return <div>Loading...</div>;
 
   const handleInfoClick = () => {
     setModalOpen(true);
