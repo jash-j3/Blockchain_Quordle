@@ -159,7 +159,9 @@ const App = () => {
 
       console.log("result", result);
       console.log("guess", guesses);
-      setGuesses(result);
+      if (result.length == guesses.length) {
+        setGuesses(result);
+      }
       console.log("guess", guesses);
 
       setGS(gs);
@@ -490,7 +492,6 @@ const App = () => {
     statsTransaction();
     setModalOpen(true);
   };
-
   const handleModalClose = () => {
     setModalOpen(false);
   };
