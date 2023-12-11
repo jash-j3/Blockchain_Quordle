@@ -32,11 +32,11 @@ After the package is published, you should see an out similar to the following:
 
 ### Run the Frontend
 
-Copy the `sender` address from the previous JSON output and paste it into `Blockchain_Quordle/quordle/.env`. The
+Copy the `sender` address from the previous JSON output and paste it into `Blockchain_Quordle/qwordle_r/.env`. The
 frontend can now be started using the following commands:
 
 ```bash
-cd Blockchain_Quordle/quordle
+cd Blockchain_Quordle/qwordle_r
 npm install
 npm start
 ```
