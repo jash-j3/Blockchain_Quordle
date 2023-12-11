@@ -215,7 +215,7 @@ const App = () => {
       // Convert the characters to numbers
       return alternateNumbers.map((char) => parseInt(char, 10));
     };
-    const result = GS[1].map(convertToAlternateNumbers);
+    const result = GS[1] !== undefined ? GS[1].map(convertToAlternateNumbers) : guesses;
     console.log("12319909723", result);
     console.log("123123", result[colIndex]);
     try {
