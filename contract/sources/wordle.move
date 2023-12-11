@@ -7,6 +7,7 @@ module wordle::wordle {
 
     struct Game has key, drop {
         guesses: vector<vector<u8>>,
+        guess_results: vector<vector<u8>>,
         word: vector<u8>,
         is_ongoing: bool, // false if over
     }
@@ -18,7 +19,7 @@ module wordle::wordle {
         stats_array: vector<u64>, // array of size 6
     }
     
-    public fun register(account: &signer) acquires Account, Game {
+    entry fun register(account: &signer) acquires Account, Game {
         assert!(!exists<Account>(signer::address_of(account)), error::already_exists(common::err_already_init()));
 
         let acc = Account {
@@ -33,25 +34,22 @@ module wordle::wordle {
     }
 
     // (is_game_done, wordle_cmp_array)
-    public fun submit_guess(account: &signer, guess: vector<u8>): (bool, vector<u8>) acquires Game, Account {
+    entry fun submit_guess(account: &signer, guess: vector<u8>) acquires Game, Account {
         check_word(&guess);
 
         let game = borrow_global_mut<Game>(signer::address_of(account));
         assert!(game.is_ongoing, error::invalid_state(common::err_game_over()));
 
-        vector::push_back(&mut game.guesses, guess);
-
         let res: vector<u8> = wordle_cmp(game.word, guess);
+
+        vector::push_back(&mut game.guesses, guess);
+        vector::push_back(&mut game.guess_results, res);
 
         if (guess == game.word) {
             finish_game(account, game, true);
-            (false, res)
         } else if (vector::length(&game.guesses) == common::max_guesses()) {
             finish_game(account, game, false);
-            (false, res)
-        } else {
-            (true, res)
-        }
+        };
     }
 
     fun wordle_cmp(target: vector<u8>, guess: vector<u8>): vector<u8> {
@@ -142,10 +140,10 @@ module wordle::wordle {
 
     fun start_game(account: &signer) acquires Account, Game {
         let acc = borrow_global_mut<Account>(signer::address_of(account));
-        acc.games_played = acc.games_played + 1;
         let idx: u64 = gen_idx(account, acc, b"wordleseed123");
         let game = Game {
             guesses: vector[],
+            guess_results: vector[],
             word: *vector::borrow(&common::words(), idx),
             is_ongoing: true
         };
@@ -156,7 +154,7 @@ module wordle::wordle {
         move_to(account, game);
     }
 
-    public fun reset(account: &signer) acquires Game, Account {
+    entry fun reset(account: &signer) acquires Game, Account {
         let game = borrow_global<Game>(signer::address_of(account));
         assert!(!game.is_ongoing, error::invalid_state(common::err_incomplete_game()));
 
