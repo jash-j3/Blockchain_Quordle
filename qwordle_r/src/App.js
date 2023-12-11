@@ -171,26 +171,33 @@ const App = () => {
     executeTransaction();
   }, [account]); // Re-run the effect if account changes
 
-  const onReset = async() => {
-    if(GS[0].length!=0)
-    {const transaction = {
-      arguments: [],
-      function: `${process.env.REACT_APP_ADDRESS}::wordle::reset`,
-      type_arguments: [],
-    };
+  const onReset = async () => {
     try {
-      const pendingTransaction =
-        await window.aptos.signAndSubmitTransaction(transaction);
-      const client = new AptosClient("https://devnet.aptoslabs.com");
-      const txn = await client.waitForTransactionWithResult(
-        pendingTransaction.hash
-      );
-      setTransactionResult(txn);
-    } catch (err) {
-      console.log(err);
-      setError(err);
-    }}
-  }
+      if (GS[0].length != 0) {
+        const transaction = {
+          arguments: [],
+          function: `${process.env.REACT_APP_ADDRESS}::wordle::reset`,
+          type_arguments: [],
+        };
+        try {
+          const pendingTransaction = await window.aptos.signAndSubmitTransaction(
+            transaction
+          );
+          const client = new AptosClient("https://devnet.aptoslabs.com");
+          const txn = await client.waitForTransactionWithResult(
+            pendingTransaction.hash
+          );
+          setTransactionResult(txn);
+        } catch (err) {
+          console.log(err);
+          setError(err);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    
+  };
   //GAME HERE{}
 
   const isRowComplete = (row) => {
@@ -200,7 +207,6 @@ const App = () => {
   const getLetterColor = (rowIndex, cell, colIndex) => {
     // Only color if the word is complete and in the dictionary
     let word = guesses[rowIndex].join("");
-    console.log("res22");
 
     const isCorrectLetter = WORD.includes(cell);
     const isCorrectPosition = WORD[colIndex] === cell;
@@ -215,16 +221,14 @@ const App = () => {
       // Convert the characters to numbers
       return alternateNumbers.map((char) => parseInt(char, 10));
     };
-    const result = GS[1] !== undefined ? GS[1].map(convertToAlternateNumbers) : guesses;
-    console.log("12319909723", result);
-    console.log("123123", result[colIndex]);
+    const result =
+      GS[1] !== undefined ? GS[1].map(convertToAlternateNumbers) : guesses;
     try {
       if (result[rowIndex][colIndex] == 2) {
         return "#4caf50"; // Green for correct position
       } else if (result[rowIndex][colIndex] == 1) {
         return "#ff9800"; // Orange for correct letter but wrong position
-      }
-      else{
+      } else {
         return "transparent";
       }
     } catch (error) {}
@@ -311,7 +315,6 @@ const App = () => {
         // }
 
         const executeTransaction = async () => {
-          console.log("hello:", account);
           try {
             console.log(
               "encoding",
@@ -322,12 +325,10 @@ const App = () => {
               type_arguments: [],
               arguments: [guesses[row].map((char) => char.charCodeAt(0))],
             };
-            console.log("here1");
 
             const pendingTransaction =
               await window.aptos.signAndSubmitTransaction(submitGuess);
 
-            console.log("here2");
             const client = new AptosClient("https://devnet.aptoslabs.com");
             const txn = await client.waitForTransactionWithResult(
               pendingTransaction.hash
@@ -671,7 +672,9 @@ const App = () => {
         Sequence Number: <code>{account?.sequence_number}</code>
       </p> */}
         <ThemeProvider theme={theme}>
-          <Button variant="outlined" onClick={onReset}>Reset</Button>
+          <Button variant="outlined" onClick={onReset}>
+            Reset
+          </Button>
         </ThemeProvider>
       </Container>
     </div>
