@@ -3,16 +3,18 @@
 *Inter IIT Tech 12.0 - Team 35*
 
 
+The code is available at https://github.com/jash-j3/Blockchain_Quordle
+
+
 ### Steps to Publish the Aptos Package
 
 ```bash
-git clone https://github.com/jash-j3/Blockchain_Quordle.git
 cd Blockchain_Quordle/contract
-aptos init
+aptos init # creates a new account (public/private key pair)
 aptos move publish --named-addresses wordle=default --included-artifacts none
 ```
 
-After the package is published, you should see an out similar to the following:
+After the package is published, you should see an output similar to the following:
 
 ```json
 {
@@ -30,10 +32,17 @@ After the package is published, you should see an out similar to the following:
 }
 ```
 
+#### Note about Published Package Size
+
+Because of the large word list, we had to make some optimizations to reduce the size of the package. The main two
+changes were:
+
+1. Each word is stored as a 32-bit integer, instead of a string.
+2. The package is published with the `--included-artifacts none` option, which removes the build artifacts
 ### Run the Frontend
 
-Copy the `sender` address from the previous JSON output and paste it into `Blockchain_Quordle/qwordle_r/.env`. The
-frontend can now be started using the following commands:
+Copy the `sender` address from the previous JSON output and replace the address in `Blockchain_Quordle/qwordle_r/.env`.
+The frontend can now be started using the following commands:
 
 ```bash
 cd Blockchain_Quordle/qwordle_r
