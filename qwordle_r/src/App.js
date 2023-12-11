@@ -61,7 +61,6 @@ const App = () => {
         .map(() => React.createRef())
     )
   );
-
   useEffect(() => {
     const getAptosWallet = () => {
       if ("aptos" in window) {
@@ -155,13 +154,23 @@ const App = () => {
         return pairs.map((pair) => String.fromCharCode(parseInt(pair, 16)));
       };
 
-      const result = gs[0].map(convertHexToChars);
+      let result = gs[0].map(convertHexToChars);
 
       console.log("result", result);
       console.log("guess", guesses);
-      if (result.length == guesses.length) {
-        setGuesses(result);
-      }
+      result = Array.from({ length: 6 }, (v, i) => result[i] || []);
+
+      // Ensure each inner array has exactly 5 elements
+      result = result.map((subArray) => {
+        return Array.from(
+          { length: 5 },
+          (v, i) => subArray[i] || ""
+        );
+      });
+      console.log("finally resuly", result);
+      setGuesses(result);
+      // if (result.length == guesses.length) {
+      // }
       console.log("guess", guesses);
 
       setGS(gs);
@@ -180,9 +189,8 @@ const App = () => {
           type_arguments: [],
         };
         try {
-          const pendingTransaction = await window.aptos.signAndSubmitTransaction(
-            transaction
-          );
+          const pendingTransaction =
+            await window.aptos.signAndSubmitTransaction(transaction);
           const client = new AptosClient("https://devnet.aptoslabs.com");
           const txn = await client.waitForTransactionWithResult(
             pendingTransaction.hash
@@ -196,7 +204,6 @@ const App = () => {
     } catch (error) {
       console.log(error);
     }
-    
   };
   //GAME HERE{}
 
@@ -325,7 +332,7 @@ const App = () => {
               type_arguments: [],
               arguments: [guesses[row].map((char) => char.charCodeAt(0))],
             };
-
+            console.log("guesses here", guesses);
             const pendingTransaction =
               await window.aptos.signAndSubmitTransaction(submitGuess);
 
@@ -497,7 +504,6 @@ const App = () => {
     setModalOpen(false);
   };
   // useEffect((()=>(
-  console.log("hai\n", transactionResult);
   // )), [isModalOpen])
   return (
     <div>
