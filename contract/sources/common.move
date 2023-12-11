@@ -1,4 +1,5 @@
 module wordle::wordle_common {
+    use std::error;
     use std::vector;
     use std::aptos_hash;
     use std::signer;
@@ -74,6 +75,20 @@ module wordle::wordle_common {
 
         let a: u64 = aptos_hash::sip_hash(aptos_hash::keccak256(seed));
         a % range
+    }
+
+    // word must be WORD_LENGTH bytes long
+    // each byte must be ascii A to Z, so in (65..=90)
+    // word must be in common::VALID_WORDS
+    public fun check_word(word: &vector<u8>): bool {
+        assert!(vector::length(word) == word_length(), error::invalid_argument(err_wrong_length()));
+        let i = 0;
+        while (i < word_length()) {
+            let chr = *vector::borrow(word, i);
+            assert!(chr >= 65 && chr <= 90, error::invalid_argument(err_not_alpha()));
+            i = i + 1;
+        };
+        is_word_valid(word)
     }
 
     public fun is_word_valid(word: &vector<u8>): bool {
