@@ -93,9 +93,6 @@ const App = () => {
     executeTransaction();
   }, [account]); // Re-run the effect if account changes
 
-
-  
-
   //GAME HERE{}
   {
     const WORD = "ABCDE"; // Word to be guessed
@@ -214,49 +211,59 @@ const App = () => {
               return;
             }
           }
+          const executeTransaction = async () => {
+            console.log("account:", account);
+            const payload = {
+              function:
+                "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::submit_guess",
+              type_arguments: [],
+              arguments: [
+                account.address,
+                guesses[row].map((x) => word.charCodeAt(x)),
+              ],
+            };
+            const submit_guess = await client.submit_guess(payload);
+          };
+          // Word is valid, color the letters
+          setGuesses((currentGuesses) => {
+            const newGuesses = [...currentGuesses];
+            // Trigger a re-render to color the letters
+            return newGuesses;
+          });
 
-          
-            // Word is valid, color the letters
-            setGuesses((currentGuesses) => {
-              const newGuesses = [...currentGuesses];
-              // Trigger a re-render to color the letters
-              return newGuesses;
-            });
-
-            // When word is valid and new
-            if (word === WORD) {
-              toast.success("You Guessed It!");
-              stopTimer();
-              setGameStatus("won");
-              inputRefs.current[row].forEach(
-                (ref) => (ref.current.querySelector("input").disabled = true)
-              );
-              //Disable further input after guessing correctly
-              for (let x = row; x < guessesAllowed; x++) {
-                for (let y = 0; y < gridSize; y++) {
-                  inputRefs.current[x][y].current.querySelector(
-                    "input"
-                  ).disabled = true;
-                }
-              }
-            } else {
-              // Handle end of game or moving to the next row
-              if (row === guessesAllowed - 1) {
-                toast.error("Game Over!");
-                stopTimer();
-                setGameStatus("lost");
-              } else {
-                inputRefs.current[row + 1][0].current
-                  .querySelector("input")
-                  .focus();
-              }
-            }
-            // Disable the current row
+          // When word is valid and new
+          if (word === WORD) {
+            toast.success("You Guessed It!");
+            stopTimer();
+            setGameStatus("won");
             inputRefs.current[row].forEach(
               (ref) => (ref.current.querySelector("input").disabled = true)
             );
-            setGuesses([...guesses]); // Update the state to trigger re-render
-          
+            //Disable further input after guessing correctly
+            for (let x = row; x < guessesAllowed; x++) {
+              for (let y = 0; y < gridSize; y++) {
+                inputRefs.current[x][y].current.querySelector(
+                  "input"
+                ).disabled = true;
+              }
+            }
+          } else {
+            // Handle end of game or moving to the next row
+            if (row === guessesAllowed - 1) {
+              toast.error("Game Over!");
+              stopTimer();
+              setGameStatus("lost");
+            } else {
+              inputRefs.current[row + 1][0].current
+                .querySelector("input")
+                .focus();
+            }
+          }
+          // Disable the current row
+          inputRefs.current[row].forEach(
+            (ref) => (ref.current.querySelector("input").disabled = true)
+          );
+          setGuesses([...guesses]); // Update the state to trigger re-render
         } else {
           toast.error("Word Not Complete!");
         }
