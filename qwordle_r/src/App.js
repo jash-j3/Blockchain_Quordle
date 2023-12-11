@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Home from "./page1";
-import './App.css'
+import "./App.css";
 import {
   Types,
   AptosClient,
@@ -45,33 +45,35 @@ const App = () => {
     const executeTransaction = async () => {
       if (!account) return;
 
-      // const transaction = {
-      //   arguments: [],
-      //   function:
-      //     "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::register",
-      //   type_arguments: [],
-      // };
       console.log("account:", account);
       const payload = {
-        function: "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::get_stats",
+        function:
+          "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::get_stats",
         type_arguments: [],
         arguments: [account.address],
       };
       const balance = await client.view(payload);
       console.log("view here ", balance);
-      // try {
-      //   const pendingTransaction = await window.aptos.signAndSubmitTransaction(
-      //     transaction
-      //   );
-      //   const client = new AptosClient("https://testnet.aptoslabs.com");
-      //   const txn = await client.waitForTransactionWithResult(
-      //     pendingTransaction.hash
-      //   );
-      //   setTransactionResult(txn);
-      // } catch (err) {
-      //   console.log(err);
-      //   setError(err);
-      // }
+      if (!balance) {
+        const transaction = {
+          arguments: [],
+          function:
+            "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::register",
+          type_arguments: [],
+        };
+        try {
+          const pendingTransaction =
+            await window.aptos.signAndSubmitTransaction(transaction);
+          const client = new AptosClient("https://testnet.aptoslabs.com");
+          const txn = await client.waitForTransactionWithResult(
+            pendingTransaction.hash
+          );
+          setTransactionResult(txn);
+        } catch (err) {
+          console.log(err);
+          setError(err);
+        }
+      }
     };
 
     executeTransaction();
