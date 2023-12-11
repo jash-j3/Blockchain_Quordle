@@ -51,7 +51,9 @@ module wordle::wordle {
 
     // (is_game_done, wordle_cmp_array)
     entry fun submit_guess(account: &signer, guess: vector<u8>) acquires Game, Account {
-        check_word(&guess);
+        if (!check_word(&guess)) {
+            return
+        };
 
         let game = borrow_global_mut<Game>(signer::address_of(account));
         assert!(game.is_ongoing, error::invalid_state(common::err_game_over()));
@@ -135,15 +137,15 @@ module wordle::wordle {
     // word must be WORD_LENGTH bytes long
     // each byte must be ascii A to Z, so in (65..=90)
     // word must be in common::VALID_WORDS
-    fun check_word(word: &vector<u8>) {
+    fun check_word(word: &vector<u8>): bool {
         assert!(vector::length(word) == common::word_length(), error::invalid_argument(common::err_wrong_length()));
         let i = 0;
         while (i < common::word_length()) {
             let chr = *vector::borrow(word, i);
-            assert!(chr >= 64 && chr <= 91, error::invalid_argument(common::err_not_alpha()));
+            assert!(chr >= 65 && chr <= 90, error::invalid_argument(common::err_not_alpha()));
             i = i + 1;
         };
-        assert!(common::is_word_valid(word), error::invalid_argument(common::err_not_word()));
+        common::is_word_valid(word)
     }
 
     fun gen_idx(account: &signer, acc: &Account, seed: vector<u8>): u64 {
