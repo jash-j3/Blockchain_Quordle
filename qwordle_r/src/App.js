@@ -435,6 +435,24 @@ const App = () => {
   if (!account) return <div>Loading...</div>;
 
   const handleInfoClick = () => {
+    const statsTransaction = async () => {
+      console.log("Heyy\n\n\n");
+      if (!account) return;
+      const payload = {
+        function:
+          "0x7653ff4b28a1da697bf2d75aeed4df1821926cedd0e889379593f2b7847f386e::wordle::get_stats",
+        type_arguments: [],
+        arguments: [account.address],
+      };
+      try {
+        const view = await client.view(payload);
+        setStats(view);
+        console.log("view here ", view);
+      } catch (error) {
+        console.log("register error", error);
+      }
+    };
+    statsTransaction();
     setModalOpen(true);
   };
 
@@ -524,7 +542,15 @@ const App = () => {
                         display: "inline-block",
                       }}
                     ></span>
-                    <span style={{ fontWeight:"bold", position: "absolute", left:"30px"}}>{x}</span>
+                    <span
+                      style={{
+                        fontWeight: "bold",
+                        position: "absolute",
+                        left: "30px",
+                      }}
+                    >
+                      {x}
+                    </span>
                   </div>
                 );
               })}
