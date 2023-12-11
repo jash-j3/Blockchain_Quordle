@@ -4,7 +4,6 @@ import { Container, Typography, TextField, Box } from "@mui/material";
 import toast, { Toaster } from "react-hot-toast";
 import dictionary from "./dictionary";
 import "./App.css";
-import Modal from "@mui/material/Modal";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import InfoIcon from "@mui/icons-material/Info";
@@ -14,7 +13,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-import CloseIcon from "@mui/icons-material/Close";
 
 import {
   Types,
