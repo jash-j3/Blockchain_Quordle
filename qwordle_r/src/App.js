@@ -13,7 +13,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-
 import {
   Types,
   AptosClient,
@@ -21,11 +20,28 @@ import {
   HexString,
   TxnBuilderTypes,
 } from "aptos";
-import Web3 from "web3";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+const theme = createTheme({
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "black",
+          borderColor: "white",
+          color: "white",
+          border: "1px solid",
+          "&:hover": {
+            backgroundColor: "black",
+            borderColor: "white",
+          },
+        },
+      },
+    },
+  },
+});
 const client = new AptosClient("https://fullnode.devnet.aptoslabs.com/v1");
 
 const App = () => {
-  const web3 = new Web3();
   const [account, setAccount] = useState(null);
   const [transactionResult, setTransactionResult] = useState(null);
   const [error, setError] = useState(null);
@@ -34,6 +50,7 @@ const App = () => {
   const WORD = "ABCDE"; // Word to be guessed
   const gridSize = 5; // 5 letters in a word
   const guessesAllowed = 6; // 6 attempts
+  // console.log("envvv", process.env.REACT_APP_ADDRESS);
   const [guesses, setGuesses] = useState(
     Array.from({ length: guessesAllowed }, () => Array(gridSize).fill(""))
   );
@@ -77,8 +94,7 @@ const App = () => {
 
       console.log("account:", account);
       const payload = {
-        function:
-          "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::get_stats",
+        function: `${process.env.REACT_APP_ADDRESS}::wordle::get_stats`,
         type_arguments: [],
         arguments: [account.address],
       };
@@ -90,8 +106,7 @@ const App = () => {
         console.log("register error", error);
         const transaction = {
           arguments: [],
-          function:
-            "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::register",
+          function: `${process.env.REACT_APP_ADDRESS}::wordle::register`,
           type_arguments: [],
         };
         try {
@@ -109,8 +124,7 @@ const App = () => {
       }
 
       const gameStatus = {
-        function:
-          "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::get_game_state",
+        function: `${process.env.REACT_APP_ADDRESS}::wordle::get_game_state`,
         type_arguments: [],
         arguments: [account.address],
       };
@@ -155,6 +169,26 @@ const App = () => {
     executeTransaction();
   }, [account]); // Re-run the effect if account changes
 
+  const onReset = async() => {
+    if(GS[0].length!=0)
+    {const transaction = {
+      arguments: [],
+      function: `${process.env.REACT_APP_ADDRESS}::wordle::reset`,
+      type_arguments: [],
+    };
+    try {
+      const pendingTransaction =
+        await window.aptos.signAndSubmitTransaction(transaction);
+      const client = new AptosClient("https://devnet.aptoslabs.com");
+      const txn = await client.waitForTransactionWithResult(
+        pendingTransaction.hash
+      );
+      setTransactionResult(txn);
+    } catch (err) {
+      console.log(err);
+      setError(err);
+    }}
+  }
   //GAME HERE{}
 
   const isRowComplete = (row) => {
@@ -187,6 +221,9 @@ const App = () => {
         return "#4caf50"; // Green for correct position
       } else if (result[rowIndex][colIndex] == 1) {
         return "#ff9800"; // Orange for correct letter but wrong position
+      }
+      else{
+        return "transparent";
       }
     } catch (error) {}
 
@@ -279,8 +316,7 @@ const App = () => {
               guesses[row].map((char) => char.charCodeAt(0))
             );
             const submitGuess = {
-              function:
-                "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::submit_guess",
+              function: `${process.env.REACT_APP_ADDRESS}::wordle::submit_guess`,
               type_arguments: [],
               arguments: [guesses[row].map((char) => char.charCodeAt(0))],
             };
@@ -298,8 +334,7 @@ const App = () => {
             setTransactionResult(txn);
             console.log("account:", account);
             const payload = {
-              function:
-                "0xf351504601d020cc2e0e4e7a43c4840419eff31fa1accb81c5d2a20861397940::wordle::get_game_state",
+              function: `${process.env.REACT_APP_ADDRESS}::wordle::get_game_state`,
               type_arguments: [],
               arguments: [account.address],
             };
@@ -634,10 +669,10 @@ const App = () => {
       <p>
         Sequence Number: <code>{account?.sequence_number}</code>
       </p> */}
+        <ThemeProvider theme={theme}>
+          <Button variant="outlined" onClick={onReset}>Reset</Button>
+        </ThemeProvider>
       </Container>
-      {transactionResult && (
-        <div>Transaction successful: {JSON.stringify(transactionResult)}</div>
-      )}
     </div>
   );
 };
