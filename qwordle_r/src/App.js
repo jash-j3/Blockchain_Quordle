@@ -204,6 +204,9 @@ const App = () => {
     } catch (error) {
       console.log(error);
     }
+    finally{
+      window.location.reload();
+    }
   };
   //GAME HERE{}
 
@@ -367,6 +370,7 @@ const App = () => {
             console.log(err);
             console.log("in the catchhhh");
           } finally {
+            window.location.reload();
             console.log("finalyyyyy");
           }
           // const submitGuess = {
